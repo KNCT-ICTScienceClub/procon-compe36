@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
@@ -24,19 +25,27 @@ public class EntityManager : MonoBehaviour
     [SerializeField] GameObject mainCamera;
     [SerializeField] GameObject tableFrame;
     [SerializeField] GameObject statusText;
+    [SerializeField] bool receptionFlag;
     [SerializeField] bool randomFlag;
 
     [Serializable]
     class Procon
     {
-        public Procon(int size, bool randomFlag)
+        public Procon(int size, bool receptionFlag, bool randomFlag)
         {
-            if (size % 2 == 1)
+            if (receptionFlag)
             {
-                size++;
+                ReceiveData receiveData=JsonUtility.FromJson<ReceiveData>("../../../procon36_server/informationLog/problem.json");
             }
-            problemSize = size;
-            MakeProblem(randomFlag);
+            else
+            {
+                if (size % 2 == 1)
+                {
+                    size++;
+                }
+                problemSize = size;
+                MakeProblem(randomFlag);
+            }
         }
         public GameObject[,] entity = new GameObject[24, 24];
         public class Frame
@@ -168,7 +177,7 @@ public class EntityManager : MonoBehaviour
                 for (int j = 0; j < problemSize; j++)
                 {
                     Renderer renderer = entity[i, j].GetComponent<Renderer>();
-                    renderer.material.color = Color.HSVToRGB((float)(problem[i, j] % Mathf.Ceil(problemSize * problemSize / 6)) / (problemSize * problemSize / 6), problem[i, j] < Mathf.Ceil(problemSize * problemSize / 6) ? 0.5f : 1f, problem[i, j] > Mathf.Ceil(problemSize * problemSize / 6) * 2 ? 0.5f : 1f);
+                    renderer.material.color = UnityEngine.Color.HSVToRGB((float)(problem[i, j] % Mathf.Ceil(problemSize * problemSize / 6)) / (problemSize * problemSize / 6), problem[i, j] < Mathf.Ceil(problemSize * problemSize / 6) ? 0.5f : 1f, problem[i, j] > Mathf.Ceil(problemSize * problemSize / 6) * 2 ? 0.5f : 1f);
                     if (i != problemSize - 1)
                     {
                         frame.horizon[i, j].SetActive(problem[i, j] == problem[i + 1, j]);
@@ -269,13 +278,25 @@ public class EntityManager : MonoBehaviour
         }
     }
 
+    class ReceiveData{
+        int startAt;
+        Problem problem=new();
+        class Problem{
+            Field field=new();
+            class Field{
+                int size;
+                int[,] entities;
+            }
+        }
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         mainCamera.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
         tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
         tableFrame.GetComponent<TableManager>().resizeFrame(fieldSize);
-        procon = new(fieldSize, randomFlag);
+        procon = new(fieldSize, receptionFlag, randomFlag);
         for (int i = 0; i < 24; i++)
         {
             for (int j = 0; j < 24; j++)
