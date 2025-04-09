@@ -1,14 +1,10 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Collections.Generic;
-using System.Data;
-using System.Drawing;
 using TMPro;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.PlayerLoop;
-using UnityEngine.Rendering;
-using UnityEngine.UIElements;
+using UnityEngine.InputSystem.Controls;
 
 public class EntityManager : MonoBehaviour
 {
@@ -35,7 +31,12 @@ public class EntityManager : MonoBehaviour
         {
             if (receptionFlag)
             {
-                ReceiveData receiveData=JsonUtility.FromJson<ReceiveData>("../../../procon36_server/informationLog/problem.json");
+                string jsonFile = File.ReadAllText("../procon36_server/informationLog/problem.json",Encoding.GetEncoding("utf-8"));
+                ReceiveData receiveData=JsonUtility.FromJson<ReceiveData>(jsonFile);
+                jsonFile=jsonFile.Replace('\r',' ').Replace('\n',' ').Replace(" ","");
+                problemSize=receiveData.problem.field.size;
+                initialProblem=receiveData.problem.field.entities;
+                Initialization();
             }
             else
             {
@@ -278,14 +279,17 @@ public class EntityManager : MonoBehaviour
         }
     }
 
+    [Serializable]
     class ReceiveData{
-        int startAt;
-        Problem problem=new();
-        class Problem{
-            Field field=new();
-            class Field{
-                int size;
-                int[,] entities;
+        public int startAt;
+        public Problem problem=new();
+        [Serializable]
+        public class Problem{
+            public Field field=new();
+            [Serializable]
+            public class Field{
+                public int size;
+                public int[,] entities;
             }
         }
     }
