@@ -16,7 +16,7 @@ class Procon {
 
         }
         else {
-            this.makeProblem(size);
+            this.board = this.makeRandomProblem(size);
         }
     }
 
@@ -52,7 +52,7 @@ class Procon {
         }
     }
 
-    #makeRandom(size) {
+    makeRandomProblem(size) {
         let count = -1;
         let entities = new Array(size).fill(0).map(() => new Array(size).fill(0).map(() => Math.floor((count += 1) / 2)));
         let array = entities.flat();
@@ -70,7 +70,7 @@ class Procon {
         return entities;
     }
 
-    makeProblem(size) {
+    makeProblemFile() {
         class Field {
             size;
             entities;
@@ -92,14 +92,12 @@ class Procon {
                 this.problem = new Problem(board);
             }
         }
-        this.size = size;
-        let receiveData = new ReceiveData(this.#makeRandom(size));
-        this.board = receiveData.problem.field.entities;
-
+        let receiveData = new ReceiveData(this.board);
+        receiveData.problem.field.entities = receiveData.problem.field.entities.flat();
         fs.writeFileSync(`../informationLog/problem.json`, JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }
 
-    makeAnswer() {
+    makeAnswerFile() {
         class SendData {
             ops;
             constructor(answer) {

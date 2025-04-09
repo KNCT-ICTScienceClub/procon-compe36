@@ -2,10 +2,26 @@ using UnityEngine;
 
 public class TableManager : MonoBehaviour
 {
+    /// <summary>
+    /// 
+    /// </summary>
     [SerializeField] GameObject top;
+    /// <summary>
+    /// 
+    /// </summary>
     [SerializeField] GameObject bottom;
+    /// <summary>
+    /// 
+    /// </summary>
     [SerializeField] GameObject right;
+    /// <summary>
+    /// 
+    /// </summary>
     [SerializeField] GameObject left;
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="size"></param>
     public void resizeFrame(int size)
     {
         top.transform.localPosition = new Vector3(0f, 0f, (float)size / 2 + 0.25f);
