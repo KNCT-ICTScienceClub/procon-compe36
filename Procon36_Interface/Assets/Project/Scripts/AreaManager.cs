@@ -4,25 +4,25 @@ using UnityEngine;
 public class AreaManager : MonoBehaviour
 {   
     /// <summary>
-    /// 
+    /// エリアの上側
     /// </summary>
     [SerializeField] GameObject top;
     /// <summary>
-    /// 
+    /// エリアの下側
     /// </summary>
     [SerializeField] GameObject bottom;
     /// <summary>
-    /// 
+    /// エリアの右側
     /// </summary>
     [SerializeField] GameObject right;
     /// <summary>
-    /// 
+    /// エリアの左側
     /// </summary>
     [SerializeField] GameObject left;
     /// <summary>
-    /// 
+    /// サイズを渡すとエリアを拡大縮小する
     /// </summary>
-    /// <param name="size"></param>
+    /// <param name="size">エリアのサイズ</param>
     public void resizeFrame(int size)
     {
         top.transform.localPosition = new Vector3(0f, 0f, (float)size / 2);

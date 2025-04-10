@@ -3,7 +3,7 @@ using UnityEngine;
 public class IndexManager : MonoBehaviour
 {
     /// <summary>
-    /// 
+    /// エンティティの添え字
     /// </summary>
     public Vector2 index { get; set; }
     // Start is called once before the first execution of Update after the MonoBehaviour is created

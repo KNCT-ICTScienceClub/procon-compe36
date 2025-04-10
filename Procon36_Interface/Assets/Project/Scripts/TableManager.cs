@@ -3,25 +3,25 @@ using UnityEngine;
 public class TableManager : MonoBehaviour
 {
     /// <summary>
-    /// 
+    /// テーブルの枠の上側
     /// </summary>
     [SerializeField] GameObject top;
     /// <summary>
-    /// 
+    /// テーブルの枠の下側
     /// </summary>
     [SerializeField] GameObject bottom;
     /// <summary>
-    /// 
+    /// テーブルの枠の右側
     /// </summary>
     [SerializeField] GameObject right;
     /// <summary>
-    /// 
+    /// テーブルの枠の左側
     /// </summary>
     [SerializeField] GameObject left;
     /// <summary>
-    /// 
+    /// サイズを渡すとテーブルの枠を拡大縮小する
     /// </summary>
-    /// <param name="size"></param>
+    /// <param name="size">枠のサイズ</param>
     public void resizeFrame(int size)
     {
         top.transform.localPosition = new Vector3(0f, 0f, (float)size / 2 + 0.25f);
