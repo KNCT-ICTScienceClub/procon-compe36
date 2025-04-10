@@ -64,7 +64,7 @@ public class EntityManager : MonoBehaviour
     /// trueにすると自動で生成した問題をシャッフルするようになる
     /// </summary>
     [SerializeField] bool randomFlag;
-    
+
     /// <summary>
     /// 今回のプロコン必要な関数をまとめたクラス
     /// </summary>
@@ -374,7 +374,7 @@ public class EntityManager : MonoBehaviour
         /// <summary>
         /// 選択範囲のフレームの座標
         /// </summary>
-        [NonSerialized] public Vector3 holdArea = Vector3.zero;
+        [NonSerialized] public Vector3 holdArea = new Vector3(-1, -1, -1);
         /// <summary>
         /// 範囲選択中であるかを判断するフラグ
         /// </summary>
@@ -422,12 +422,13 @@ public class EntityManager : MonoBehaviour
         /// <summary>
         /// 範囲選択の大きさ
         /// </summary>
+        //なんかxの座標を同じにしたときの最小サイズ
         public int AreaSize
         {
             get
             {
                 int size;
-                if (Index.x > Index.y)
+                if (Index.x - initialIndex.x > Index.y - initialIndex.y)
                 {
                     size = (int)(Index.x - initialIndex.x) + 1;
                     if (initialIndex.y + size >= problemSize)
@@ -498,6 +499,7 @@ public class EntityManager : MonoBehaviour
     {
         procon = new(fieldSize, receptionFlag, randomFlag);
         fieldSize = procon.problemSize;
+        //テーブルやカメラを動かす
         mainCamera.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
         tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
         tableFrame.GetComponent<TableManager>().resizeFrame(fieldSize);
@@ -505,22 +507,27 @@ public class EntityManager : MonoBehaviour
         {
             for (int j = 0; j < 24; j++)
             {
+                //エンティティをコピーする
                 procon.entity[i, j] = Instantiate(originEntity, new Vector3(-11.5f + j, 0, 11.5f - i), Quaternion.identity);
                 procon.entity[i, j].transform.SetParent(entityParent.transform);
                 procon.entity[i, j].SetActive(i < fieldSize && j < fieldSize);
+                //配列の添え字を割り当てる
                 procon.entity[i, j].GetComponent<IndexManager>().index = new(j, i);
                 if (j != 23)
                 {
+                    //垂直方向のフレームをコピーする
                     procon.frame.vertical[i, j] = Instantiate(originFrameVertical, new Vector3(-11f + j, 0.05f, 11.5f - i), Quaternion.identity);
                     procon.frame.vertical[i, j].transform.SetParent(frameParent.transform);
                     procon.frame.vertical[i, j].SetActive(false);
                 }
                 if (i != 23)
                 {
+                    //水平方向のフレームをコピーする
                     procon.frame.horizon[i, j] = Instantiate(originFrameHorizon, new Vector3(-11.5f + j, 0.05f, 11f - i), Quaternion.identity);
                     procon.frame.horizon[i, j].transform.SetParent(frameParent.transform);
                     procon.frame.horizon[i, j].SetActive(false);
                 }
+                //エンティティの番号のテキストメッシュをコピーする
                 procon.entityNumber[i, j] = Instantiate(originTextMesh, new Vector3(-11.5f + j, 0.51f, 11.5f - i), Quaternion.Euler(90f, 0f, 0f));
                 procon.entityNumber[i, j].transform.SetParent(textParent.transform);
                 procon.entityNumber[i, j].SetActive(i < fieldSize && j < fieldSize);
@@ -529,13 +536,16 @@ public class EntityManager : MonoBehaviour
         procon.SetColor();
         if (receptionFlag)
         {
+            //回答のjsonファイルを読み込む
             string jsonFile = File.ReadAllText("../procon36_server/informationLog/answer.json", Encoding.GetEncoding("utf-8"));
             SendData sendData = JsonUtility.FromJson<SendData>(jsonFile);
+            //回転操作を行う
             foreach (SendData.Ops ops in sendData.ops)
             {
                 procon.Engage(new Vector2(ops.x, ops.y), ops.n);
             }
         }
+        //ステータスを更新する
         statusText.GetComponent<TextMeshProUGUI>().text = string.Format("turn:{0}\nmatch:{1}", procon.turn, procon.MatchCount);
     }
 
@@ -544,6 +554,7 @@ public class EntityManager : MonoBehaviour
     {
         if (Input.GetMouseButtonDown(0))
         {
+            //範囲選択がされていないときの処理
             if (!procon.holdFlag)
             {
                 if (procon.HitFlag)
@@ -552,6 +563,7 @@ public class EntityManager : MonoBehaviour
                     selectArea.SetActive(true);
                 }
             }
+            //範囲選択がされているときの処理
             else
             {
                 procon.Engage(procon.holdArea, (int)procon.holdArea.z);
@@ -562,18 +574,27 @@ public class EntityManager : MonoBehaviour
                 procon.initialFlag = false;
             }
         }
+        //範囲選択中の処理
         if (Input.GetMouseButton(0))
         {
             if (procon.HitFlag && procon.initialFlag)
             {
-                if (procon.initialIndex != procon.Index)
+                //AreaSizeが2以上になるときに処理を行う
+                if (procon.Index.x - procon.initialIndex.x > 0 || procon.Index.y - procon.initialIndex.y > 0)
                 {
                     selectArea.transform.position = new Vector3(procon.initialPosition.x - 0.5f + (float)procon.AreaSize / 2, 0.07f, procon.initialPosition.y + 0.5f - (float)procon.AreaSize / 2);
                     selectArea.GetComponent<AreaManager>().resizeFrame(procon.AreaSize);
                     procon.holdArea = new Vector3(procon.initialIndex.x, procon.initialIndex.y, procon.AreaSize);
                 }
+                //そうでないときは表示を消す
+                else
+                {
+                    selectArea.transform.position = new Vector3(0f, -1f, 0f);
+                    procon.holdArea = Vector3.zero;
+                }
             }
         }
+        //フラグをあげて範囲選択を確定する
         if (Input.GetMouseButtonUp(0))
         {
             if (procon.initialFlag && procon.holdArea != Vector3.zero)
@@ -581,6 +602,7 @@ public class EntityManager : MonoBehaviour
                 procon.holdFlag = true;
             }
         }
+        //途中で右クリックを押すとキャンセルされる
         if (Input.GetMouseButtonDown(1))
         {
             selectArea.transform.position = new Vector3(0f, -1f, 0f);
@@ -589,11 +611,11 @@ public class EntityManager : MonoBehaviour
             procon.holdFlag = false;
             procon.initialFlag = false;
         }
+        //Rを押すと1手戻る
         if (Input.GetKeyDown(KeyCode.R) && !procon.initialFlag && procon.turn != 0)
         {
             procon.TurnBack();
             statusText.GetComponent<TextMeshProUGUI>().text = string.Format("turn:{0}\nmatch:{1}", procon.turn, procon.MatchCount);
-            procon.initialFlag = false;
         }
     }
 }
