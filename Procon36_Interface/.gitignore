@@ -76,3 +76,8 @@ crashlytics-build.properties
 # Asset Store files
 /[Aa]ssets/*
 !/[Aa]ssets/Project/
+
+# Project setting files
+/ProjectSettings/GraphicsSettings.asset
+/ProjectSettings/QualitySettings.asset
+/ProjectSettings/SceneTemplateSettings.json
