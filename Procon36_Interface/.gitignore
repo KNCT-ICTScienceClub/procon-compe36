@@ -78,6 +78,6 @@ crashlytics-build.properties
 !/[Aa]ssets/Project/
 
 # Project setting files
+/ProjectSettings/SceneTemplateSettings.json
 /ProjectSettings/GraphicsSettings.asset
 /ProjectSettings/QualitySettings.asset
-/ProjectSettings/SceneTemplateSettings.json
