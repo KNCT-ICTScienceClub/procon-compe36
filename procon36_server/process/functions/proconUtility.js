@@ -3,7 +3,7 @@ const fs = require('fs');
 class Procon {
     answer = [];
 
-    currentBoard;
+    board;
 
     size;
 
@@ -13,24 +13,31 @@ class Procon {
         return this.answer.length;
     }
 
-    constructor(size, board = null) {
-        if ((size < 4 || 24 < size)) {
-            throw new RangeError("ボードのサイズは4~24の値を指定してください.\n問題箇所--->new Procon(size="+size+"...");
+    constructor(element) {
+        if (typeof element == "number") {
+            if ((element < 4 || 24 < element)) {
+                throw new RangeError("ボードのサイズは4~24の値を指定してください.\n問題箇所--->new Procon(element=" + element + "...");
+            }
+            this.board = this.#makeRandomProblem(element);
+            this.size = element;
         }
-        if (board) {
+        else if ((element[0]?.length ?? 0) >= 2) {
 
         }
         else {
-            this.currentBoard = this.makeRandomProblem(size);
+            throw new TypeError("引数には数値か2次元配列を入力してください.\n問題箇所--->new Procon(element=" + element + "...");
         }
     }
 
     engage(board, position, size, reverse = false) {
-        if(!board[0].length){
-            throw new TypeError("boardの引数は2次元配列を指定してください.\n問題箇所--->Procon.engage(board="+board+"...");
+        if (!board[0]?.length) {
+            throw new TypeError("boardの引数は2次元配列を指定してください.\n問題箇所--->engage(board=" + board + "...");
         }
-        else if(board[0].length<position[0]+size||board.length<position[1]+size){
-            throw new RangeError("選択範囲がboardからはみ出しています.\n\tposition:"+position+",size:"+size);
+        else if ((position?.length ?? 0) < 2) {
+            throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
+        }
+        else if (board[0].length < position[0] + size || board.length < position[1] + size) {
+            throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => new Array(size).fill(0));
         for (let i = 0; i < size; i++) {
@@ -59,15 +66,18 @@ class Procon {
 
     turnAdd(position, size) {
         this.answer.push(new Order(position, size));
-        this.engage(this.currentBoard, position, size);
+        this.engage(this.board, position, size);
     }
 
     turnBack() {
+        if ((answer?.length ?? 0) == 0) {
+            throw new Error("Procon.answer値が存在しないためこれ以上手数を戻すことはできません.\n問題箇所--->turnBack();");
+        }
         let answer = this.answer.pop();
-        this.engage(this.currentBoard, answer.position, answer.size, true);
+        this.engage(this.board, answer.position, answer.size, true);
     }
 
-    makeRandomProblem(size) {
+    #makeRandomProblem(size) {
         let count = -1;
         let entities = new Array(size).fill(0).map(() => new Array(size).fill(0).map(() => Math.floor((count += 1) / 2)));
         let array = entities.flat();
@@ -107,7 +117,7 @@ class Procon {
                 this.problem = new Problem(board);
             }
         }
-        let receiveData = new ReceiveData(this.currentBoard);
+        let receiveData = new ReceiveData(this.board);
         receiveData.problem.field.entities = receiveData.problem.field.entities.flat();
         fs.writeFileSync(`../informationLog/problem.json`, JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }

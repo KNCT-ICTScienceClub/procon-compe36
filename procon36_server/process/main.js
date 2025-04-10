@@ -1,15 +1,13 @@
 /*
 cd ./procon36_server/process
 */
+
 const Lampyrisma=require("./functions/orbitalSystem");
 
-let procon=new Lampyrisma(2);
-
+let procon=new Lampyrisma(24);
 procon.timer.start();
-console.log(procon.currentBoard);
-console.log("--------");
-procon.turnAdd([1,1],2);
-procon.turnBack();
-console.log(procon.currentBoard);
+console.log(procon.board);
+procon.makeAnswerFile();
+procon.makeProblemFile();
 procon.timer.end();
 procon.timer.show();
