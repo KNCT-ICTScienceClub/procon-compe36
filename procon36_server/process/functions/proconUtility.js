@@ -96,39 +96,12 @@ class Procon {
     }
 
     makeProblemFile() {
-        class Field {
-            size;
-            entities;
-            constructor(board) {
-                this.size = board.length;
-                this.entities = board;
-            }
-        }
-        class Problem {
-            field;
-            constructor(board) {
-                this.field = new Field(board);
-            }
-        }
-        class ReceiveData {
-            startsAt = 0;
-            problem;
-            constructor(board) {
-                this.problem = new Problem(board);
-            }
-        }
         let receiveData = new ReceiveData(this.board);
         receiveData.problem.field.entities = receiveData.problem.field.entities.flat();
         fs.writeFileSync(`../informationLog/problem.json`, JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }
 
     makeAnswerFile() {
-        class SendData {
-            ops;
-            constructor(answer) {
-                this.ops = answer;
-            }
-        }
         let sendData = new SendData(this.answer);
 
         fs.writeFileSync(`../informationLog/answer.json`, JSON.stringify(sendData, undefined, ' '), 'utf-8', (err) => console.error(err));
@@ -170,4 +143,36 @@ class Order {
     }
 }
 
-module.exports = Procon;
+class Field {
+    size;
+    entities;
+    constructor(board) {
+        this.size = board.length;
+        this.entities = board;
+    }
+}
+
+class Problem {
+    field;
+    constructor(board) {
+        this.field = new Field(board);
+    }
+}
+
+class ReceiveData {
+    startsAt = 0;
+    problem;
+    constructor(board) {
+        this.problem = new Problem(board);
+    }
+}
+
+class SendData {
+    ops;
+    constructor(answer) {
+        this.ops = answer;
+    }
+}
+
+module.exports.Procon = Procon;
+module.exports.ReceiveData = ReceiveData;
