@@ -4,11 +4,10 @@ cd ./procon36_server/process
 
 const Lampyrisma=require("./functions/orbitalSystem");
 
-let procon=new Lampyrisma(4);
+let procon=new Lampyrisma(24,5,5);
 procon.timer.start();
-console.log(procon.boardValue);
-procon.engage(procon.board,[0,0],2);
-console.log(procon.boardValue);
-procon.board.flat().map(element=>console.log(element.position));
+for(let i=0;i<1000000;i++){
+    procon.engage(procon.board,[2,2],20);
+}
 procon.timer.end();
 procon.timer.show();

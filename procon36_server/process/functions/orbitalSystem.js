@@ -4,6 +4,8 @@ const ReceiveData = require("./proconUtility").ReceiveData;
 class Lampyrisma extends Procon {
     garden;
 
+    positionManager;
+
     width;
 
     depth;
@@ -12,9 +14,10 @@ class Lampyrisma extends Procon {
         super(element);
         this.width = width;
         this.depth = depth;
+        this.positionManager = [...Array(this.size * this.size / 2)].map(() => []);
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                this.board[i][j] = new EntityInfo(this.board[i][j], [i, j]);
+                this.positionManager[this.board[i][j]].push([i, j]);
             }
         }
     }
@@ -29,14 +32,14 @@ class Lampyrisma extends Procon {
         else if (board[0].length < position[0] + size || board.length < position[1] + size) {
             throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
         }
-        let area = new Array(size).fill(0).map(() => new Array(size).fill(0));
+        let area = new Array(size).fill(0).map(() => [...Array(size)]);
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    area[i][j] = board[i + position[1]][j + position[0]];
+                    area[i][j] = new EntityInfo(board[i + position[1]][j + position[0]], [i + position[1], j + position[0]]);
                 }
                 else {
-                    area[i][j] = board[j + position[1]][i + position[0]];
+                    area[i][j] = new EntityInfo(board[j + position[1]][i + position[0]], [j + position[1], i + position[0]]);
                 }
             }
         }
@@ -44,38 +47,31 @@ class Lampyrisma extends Procon {
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    board[i + position[1]][j + position[0]].position = [...area[j][i].position];
-                    board[i + position[1]][j + position[0]] = area[j][i];
+                    board[i + position[1]][j + position[0]] = area[j][i].value;
+                    this.positionManager[area[j][i].value]=this.positionManager[area[j][i].value].map(element => {
+                        if (element[0] == area[j][i].position[0] && element[1] == area[j][i].position[1]) {
+                            return [i + position[1], j + position[0]];
+                        }
+                        return element;
+                    });
                 }
                 else {
-                    board[i + position[1]][j + position[0]].position = [...area[i][j].position];
-                    board[i + position[1]][j + position[0]] = area[i][j];
+                    board[i + position[1]][j + position[0]] = area[i][j].value;
+                    this.positionManager[area[i][j].value]=this.positionManager[area[i][j].value].map(element => {
+                        if (element[0] == area[i][j].position[0] && element[1] == area[i][j].position[1]) {
+                            return [i + position[1], j + position[0]];
+                        }
+                        return element
+                    });
                 }
             }
         }
-    }
-
-    get boardValue() {
-        let array = new Array(this.size).fill([]);
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                array[i].push(this.board.value);
-            }
-        }
-        return array;
-    }
-
-    makeProblemFile() {
-        let receiveData = new ReceiveData(this.boardValue);
-        receiveData.problem.field.entities = receiveData.problem.field.entities.flat();
-        fs.writeFileSync(`../informationLog/problem.json`, JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }
 }
 
 class EntityInfo {
     value;
     position;
-    pairPosition
     get vector() {
         this.vector = [pairPosition[0] - position[0], pairPosition[1] - position[1]];
     }
@@ -85,9 +81,6 @@ class EntityInfo {
     constructor(value, position) {
         this.value = value;
         this.position = position;
-    }
-    setPair(pairPosition) {
-        this.pairPosition = pairPosition;
     }
     calcCenter(size) {
         let center = undefined;

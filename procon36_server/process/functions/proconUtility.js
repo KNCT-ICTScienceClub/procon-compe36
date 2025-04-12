@@ -70,7 +70,7 @@ class Procon {
     }
 
     turnBack() {
-        if ((answer?.length ?? 0) == 0) {
+        if ((this.answer?.length ?? 0) == 0) {
             throw new Error("Procon.answer値が存在しないためこれ以上手数を戻すことはできません.\n問題箇所--->turnBack();");
         }
         let answer = this.answer.pop();
@@ -79,7 +79,8 @@ class Procon {
 
     #makeRandomProblem(size) {
         let count = -1;
-        let entities = new Array(size).fill(0).map(() => new Array(size).fill(0).map(() => Math.floor((count += 1) / 2)));
+        let zeroFill=new Array(size).fill(0);
+        let entities = [...zeroFill].map(()=>[...zeroFill].map(() => Math.floor((count += 1) / 2)));
         let array = entities.flat();
         for (let i = 0; i < size * size - 1; i++) {
             let random = Math.floor(Math.random() * (size * size - i - 1)) + i + 1;
@@ -103,7 +104,6 @@ class Procon {
 
     makeAnswerFile() {
         let sendData = new SendData(this.answer);
-
         fs.writeFileSync(`../informationLog/answer.json`, JSON.stringify(sendData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }
 }
@@ -175,4 +175,3 @@ class SendData {
 }
 
 module.exports.Procon = Procon;
-module.exports.ReceiveData = ReceiveData;
