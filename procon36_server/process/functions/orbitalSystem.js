@@ -34,36 +34,38 @@ class Lampyrisma extends Procon {
 
     calcCenter(value) {
         let vector = [this.position[value % 2 == 0 ? value + 1 : value - 1][0] - this.position[value][0], -this.position[value % 2 == 0 ? value + 1 : value - 1][1] + this.position[value][1]];
-        let direction = (vector[0] > 0 ? 2 : (vector[0] != 0) ? 5 : 1) * (vector[1] > 0 ? 7 : (vector[1] != 0) ? 3 : 1);
-        console.log(vector);
-        let center = undefined;
-        switch (direction) {
-            case 6:
-                center = [1, -1];
-            case 15:
-                center = [0, -1];
-            case 14:
-                center = [1, 0];
-            default:
-                center = [0, 0];
+        if (Math.abs(vector[0]) > 1 || Math.abs(vector[1]) > 1 || (Math.abs(vector[0]) == 1 && Math.abs(vector[1]) == 1)) {
+            let center=this.position[value];
+            let direction = (vector[0] > 0 ? 2 : (vector[0] != 0) ? 5 : 1) * (vector[1] > 0 ? 7 : (vector[1] != 0) ? 3 : 1);
+            console.log(vector);
+            console.log(direction);
+            switch (direction) {
+                case 15:
+                    center[0] += 1;
+                case 35:
+                    center += [0,0];
+                case 14:
+                    center += [0, 0];
+            }
+            if (direction % 2 == 0) {
+                center[0] += this.position[value][0];
+                center[1] += this.position[value][1];
+            }
+            if (direction % 3 == 0) {
+                center[0] += this.position[value][0] + vector[1];
+                center[1] += this.position[value][1];
+            }
+            if (direction % 5 == 0) {
+                center[0] += this.position[value][0] + vector[0];
+                center[1] += this.position[value][1] - vector[0];
+            }
+            if (direction % 7 == 0) {
+                center[0] += this.position[value][0]
+                center[1] += this.position[value][1] + vector[1];
+            }
+            return { center: center, size: Math.abs(vector[0]) + Math.abs(vector[1]) };
         }
-        if (direction % 2 == 0) {
-            center[0] += this.position[value][0];
-            center[1] += this.position[value][1];
-        }
-        if (direction % 3 == 0) {
-            center[0] += this.position[value][0] + vector[1];
-            center[1] += this.position[value][1];
-        }
-        if (direction % 5 == 0) {
-            center[0] += this.position[value][0] + vector[0];
-            center[1] += this.position[value][1] - vector[0];
-        }
-        if (direction % 7 == 0) {
-            center[0] += this.position[value][0]
-            center[1] += this.position[value][1] + vector[1];
-        }
-        return { center: center, size: Math.abs(vector[0]) + Math.abs(vector[1]) };
+        return false;
     }
 
     engage(board, position, size, reverse = false) {
