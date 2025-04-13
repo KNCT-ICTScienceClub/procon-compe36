@@ -4,7 +4,7 @@ const ReceiveData = require("./proconUtility").ReceiveData;
 class Lampyrisma extends Procon {
     garden;
 
-    positionManager;
+    position;
 
     width;
 
@@ -12,14 +12,58 @@ class Lampyrisma extends Procon {
 
     constructor(element, width, depth) {
         super(element);
+        let flag = [...Array(this.size * this.size).fill(false)];
+        this.board = this.board.map(array => array.map(element => {
+            if (!flag[element]) {
+                flag[element] = true;
+                return Math.abs(element) * 2;
+            }
+            else {
+                return Math.abs(element) * 2 + 1;
+            }
+        }));
         this.width = width;
         this.depth = depth;
-        this.positionManager = [...Array(this.size * this.size / 2)].map(() => []);
+        this.position = [...Array(this.size * this.size)];
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                this.positionManager[this.board[i][j]].push([i, j]);
+                this.position[this.board[i][j]] = [j, i];
             }
         }
+    }
+
+    calcCenter(value) {
+        let vector = [this.position[value % 2 == 0 ? value + 1 : value - 1][0] - this.position[value][0], -this.position[value % 2 == 0 ? value + 1 : value - 1][1] + this.position[value][1]];
+        let direction = (vector[0] > 0 ? 2 : (vector[0] != 0) ? 5 : 1) * (vector[1] > 0 ? 7 : (vector[1] != 0) ? 3 : 1);
+        console.log(vector);
+        let center = undefined;
+        switch (direction) {
+            case 6:
+                center = [1, -1];
+            case 15:
+                center = [0, -1];
+            case 14:
+                center = [1, 0];
+            default:
+                center = [0, 0];
+        }
+        if (direction % 2 == 0) {
+            center[0] += this.position[value][0];
+            center[1] += this.position[value][1];
+        }
+        if (direction % 3 == 0) {
+            center[0] += this.position[value][0] + vector[1];
+            center[1] += this.position[value][1];
+        }
+        if (direction % 5 == 0) {
+            center[0] += this.position[value][0] + vector[0];
+            center[1] += this.position[value][1] - vector[0];
+        }
+        if (direction % 7 == 0) {
+            center[0] += this.position[value][0]
+            center[1] += this.position[value][1] + vector[1];
+        }
+        return { center: center, size: Math.abs(vector[0]) + Math.abs(vector[1]) };
     }
 
     engage(board, position, size, reverse = false) {
@@ -36,10 +80,10 @@ class Lampyrisma extends Procon {
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    area[i][j] = new EntityInfo(board[i + position[1]][j + position[0]], [i + position[1], j + position[0]]);
+                    area[i][j] = board[i + position[1]][j + position[0]];
                 }
                 else {
-                    area[i][j] = new EntityInfo(board[j + position[1]][i + position[0]], [j + position[1], i + position[0]]);
+                    area[i][j] = board[j + position[1]][i + position[0]];
                 }
             }
         }
@@ -47,72 +91,19 @@ class Lampyrisma extends Procon {
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    board[i + position[1]][j + position[0]] = area[j][i].value;
-                    this.positionManager[area[j][i].value]=this.positionManager[area[j][i].value].map(element => {
-                        if (element[0] == area[j][i].position[0] && element[1] == area[j][i].position[1]) {
-                            return [i + position[1], j + position[0]];
-                        }
-                        return element;
-                    });
+                    board[i + position[1]][j + position[0]] = area[j][i];
+                    this.position[area[j][i]] = [j, i];
                 }
                 else {
-                    board[i + position[1]][j + position[0]] = area[i][j].value;
-                    this.positionManager[area[i][j].value]=this.positionManager[area[i][j].value].map(element => {
-                        if (element[0] == area[i][j].position[0] && element[1] == area[i][j].position[1]) {
-                            return [i + position[1], j + position[0]];
-                        }
-                        return element
-                    });
+                    board[i + position[1]][j + position[0]] = area[i][j];
+                    this.position[area[i][j]] = [i, j];
                 }
             }
         }
     }
-}
 
-class EntityInfo {
-    value;
-    position;
-    get vector() {
-        this.vector = [pairPosition[0] - position[0], pairPosition[1] - position[1]];
-    }
-    get direction() {
-        this.direction = (this.vector[0] > 0 ? 2 : (this.vector[0] != 0) ? 5 : 1) * (this.vector[1] > 0 ? 7 : (this.vector[1] != 0) ? 3 : 1);
-    }
-    constructor(value, position) {
-        this.value = value;
-        this.position = position;
-    }
-    calcCenter(size) {
-        let center = undefined;
-        if (Math.abs(this.vector[0]) + Math.abs(this.vector[1]) == size) {
-            switch (this.direction) {
-                case 6:
-                    center = [1, -1];
-                case 15:
-                    center = [0, -1];
-                case 14:
-                    center = [1, 0];
-                default:
-                    center = [0, 0];
-            }
-            if (this.direction % 2 == 0) {
-                center[0] += this.position[0];
-                center[1] += this.position[1];
-            }
-            if (this.direction % 3 == 0) {
-                center[0] += this.position[0] + this.vector[1];
-                center += this.position[1];
-            }
-            if (this.direction % 5 == 0) {
-                center[0] += this.position[0] + this.vector[0];
-                center[1] += this.position[1] - this.vector[0];
-            }
-            if (this.direction % 7 == 0) {
-                center[0] += this.position[0]
-                center[1] += this.position[1] + this.vector[1];
-            }
-        }
-        return center;
+    decodeBoard() {
+        this.board = this.board.map(array => array.map(element => Math.floor(element / 2)));
     }
 }
 
