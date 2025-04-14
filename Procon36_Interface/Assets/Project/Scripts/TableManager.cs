@@ -22,7 +22,7 @@ public class TableManager : MonoBehaviour
     /// サイズを渡すとテーブルの枠を拡大縮小する
     /// </summary>
     /// <param name="size">枠のサイズ</param>
-    public void resizeFrame(int size)
+    public void Resize(int size)
     {
         top.transform.localPosition = new Vector3(0f, 0f, (float)size / 2 + 0.25f);
         bottom.transform.localPosition = new Vector3(0f, 0f, -(float)size / 2 - 0.25f);
@@ -33,6 +33,7 @@ public class TableManager : MonoBehaviour
         right.transform.localScale = new Vector3(0.5f, 1f, size + 1f);
         left.transform.localScale = new Vector3(0.5f, 1f, size + 1f);
     }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {

@@ -23,7 +23,7 @@ public class AreaManager : MonoBehaviour
     /// サイズを渡すとエリアを拡大縮小する
     /// </summary>
     /// <param name="size">エリアのサイズ</param>
-    public void resizeFrame(int size)
+    public void Resize(int size)
     {
         top.transform.localPosition = new Vector3(0f, 0f, (float)size / 2);
         bottom.transform.localPosition = new Vector3(0f, 0f, -(float)size / 2);
