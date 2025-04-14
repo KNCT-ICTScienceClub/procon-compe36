@@ -1,27 +1,21 @@
-const Procon = require("./proconUtility").Procon;
-const ReceiveData = require("./proconUtility").ReceiveData;
-
-class Lampyrisma extends Procon {
-    garden;
+class Garden {
+    board;
+    branch;
     entities;
-    width;
+    score;
     depth;
+    index;
 
-    constructor(element, width, depth) {
-        super(element);
-        let flag = [...Array(this.size * this.size).fill(false)];
-        this.board = this.board.map(array => array.map(element => {
-            if (!flag[element]) {
-                flag[element] = true;
-                return Math.abs(element) * 2;
-            }
-            else {
-                return Math.abs(element) * 2 + 1;
-            }
-        }));
-        this.width = width;
+    constructor(board, entities, depth, index) {
+        this.board = board;
+        this.score = 0;
         this.depth = depth;
-        this.entities = new EntityInfo(this.board);
+        this.index = index;
+        this.entities = entities;
+    }
+
+    addBranch() {
+        this.branch.push(new Garden(this.board, this.entities));
     }
 
     engage(board, position, size, reverse = false) {
@@ -62,87 +56,6 @@ class Lampyrisma extends Procon {
         }
     }
 
-    decodeBoard() {
-        this.board = this.board.map(array => array.map(element => element != 0 ? Math.floor(element / 2) : 0));
-    }
-}
-
-class EntityInfo {
-    position;
-    vector;
-    direction;
-    distance;
-
-    constructor(board) {
-        let size = board.length;
-        this.position = new Array(size * size);
-        this.vector = new Array(size * size);
-        this.direction = new Array(size * size);
-        this.distance = new Array(size * size);
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                this.position[board[i][j]] = [j, i];
-            }
-        }
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
-                if (board[i][j] % 2 == 0) {
-                    this.update(board[i][j]);
-                }
-            }
-        }
-    }
-
-    update(value) {
-        let pair = (value % 2 == 0 ? value + 1 : value - 1);
-        this.vector[value] = [this.position[pair][0] - this.position[value][0], -this.position[pair][1] + this.position[value][1]];
-        this.vector[pair] = [-this.vector[value][0], -this.vector[value][1]];
-        this.distance[value] = Math.abs(this.vector[value][0]) + Math.abs(this.vector[value][1]);
-        this.distance[pair] = this.distance[value];
-        this.direction[value] = (this.vector[value][0] > 0 ? 2 : (this.vector[value][0] != 0) ? 5 : 1) * (this.vector[value][1] > 0 ? 7 : (this.vector[value][1] != 0) ? 3 : 1);
-        this.direction[pair] = (this.vector[pair][0] > 0 ? 2 : (this.vector[pair][0] != 0) ? 5 : 1) * (this.vector[pair][1] > 0 ? 7 : (this.vector[pair][1] != 0) ? 3 : 1);
-    }
-
-    matching(value) {
-        console.log(this.vector[value]);
-        if (this.distance != 1) {
-            let center = [...this.position[value]];
-            switch (this.direction) {
-                case 15:
-                    center[0] += 1;
-                case 35:
-
-                case 14:
-
-            }
-            if (this.direction % 3 == 0) {
-                center[0] += this.vector[value][1];
-            }
-            if (this.direction % 5 == 0) {
-                center[0] += this.vector[value][0];
-                center[1] -= this.vector[value][0];
-            }
-            if (this.direction % 7 == 0) {
-                center[1] += this.vector[value][1];
-            }
-            return { center: center, size: this.distance[value] };
-        }
-        return false;
-    }
-}
-
-class Garden {
-    board = [];
-    branch;
-    score = 0;
-    constructor(board) {
-        board.map(array => this.board.push([...array]));
-        this.evaluation();
-        console.log(this.score);
-    }
-    addBranch() {
-        this.branch.push(new Garden(this.board));
-    }
     evaluation() {
         let height = this.board.length;
         let width = this.board[0].length;
@@ -193,4 +106,4 @@ class Garden {
     }
 }
 
-module.exports = Lampyrisma;
+module.exports = Garden;

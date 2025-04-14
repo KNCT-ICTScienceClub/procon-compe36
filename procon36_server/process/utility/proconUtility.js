@@ -174,4 +174,4 @@ class SendData {
     }
 }
 
-module.exports.Procon = Procon;
+module.exports = Procon;

@@ -2,9 +2,9 @@
 cd ./procon36_server/process
 */
 
-const Lampyrisma=require("./functions/orbitalSystem");
+const Lampyrisma=require("./orbitalSystem/lampyrisma");
 
-let procon=new Lampyrisma(4,5,5);
+let procon=new Lampyrisma(4);
 procon.timer.start();
 console.log(procon.board);
 for(let i=0;i<16;i++){
