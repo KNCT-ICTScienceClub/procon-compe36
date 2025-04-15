@@ -62,7 +62,7 @@ class EntityInfo {
             if (this.direction[value] % 7 == 0) {
                 target[1] += this.vector[value][1];
             }
-            return { center: target, size: this.distance[value] };
+            return { target: target, size: this.distance[value] };
         }
         return false;
     }

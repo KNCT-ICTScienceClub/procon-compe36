@@ -30,7 +30,7 @@ class Procon {
         if ((position?.length ?? 0) < 2) {
             throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
         }
-        else if (this.size < position[0] + size || this.size < position[1] + size) {
+        else if (position[0] < 0 || this.size < position[0] + size || position[1] < 0 || this.size < position[1] + size) {
             throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => new Array(size).fill(0));

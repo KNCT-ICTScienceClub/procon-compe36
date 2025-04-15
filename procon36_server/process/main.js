@@ -4,15 +4,11 @@ cd ./procon36_server/process
 
 const Lampyrisma=require("./orbitalSystem/lampyrisma");
 
-let procon=new Lampyrisma(4);
+let procon=new Lampyrisma(6);
 procon.timer.start();
 console.log(procon.board);
-for(let i=0;i<16;i++){
-    console.log(procon.entity.matching(i));
-}
-console.log(procon.board);
-/*for(let i=0;i<100000;i++){
-    procon.engage(procon.board,[1,1],23);
-}*/
+procon.garden.evaluation();
+console.log(procon.garden.score);
+procon.garden.extendBranch();
 procon.timer.end();
 procon.timer.show();

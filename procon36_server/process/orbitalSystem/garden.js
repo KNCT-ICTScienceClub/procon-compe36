@@ -2,29 +2,51 @@ class Garden {
     board;
     size;
     entity;
-    branch;
+    branch=[];
     score;
     depth;
     index;
 
     constructor(board, entity, depth, index) {
         this.board = board;
-        this.size=board.length;
+        this.size = board.length;
         this.score = 0;
         this.depth = depth;
         this.index = index;
         this.entity = entity;
     }
 
-    addBranch() {
-        this.branch.push(new Garden(this.board, this.entity));
+    extendBranch() {
+        let twig = [];
+        for (let i = 0; i < this.size * this.size; i++) {
+            let result = this.entity.matching(i);
+            if (result) {
+                if (result.target[0] < 0 || this.size < result.target[0] + result.size || result.target[1] < 0 || this.size < result.target[1] + result.size) {
+                    //twig.push(result);
+                }
+                else {
+                    twig.unshift(result);
+                }
+            }
+        }
+        console.log(twig);
+        twig.map(element=>{
+            this.engage(element.target,element.size);
+            this.branch.push(new Garden(this.board,this.entity,1,1));
+            this.engage(element.target,element.size,true);
+        });
+        this.branch.map(element=>{
+            element.evaluation()
+            console.log(element.board);
+            console.log(element.score);
+        });
     }
 
     engage(position, size, reverse = false) {
         if ((position?.length ?? 0) < 2) {
             throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
         }
-        else if (board[0].length < position[0] + size || board.length < position[1] + size) {
+        else if (position[0] < 0 || this.size < position[0] + size || position[1] < 0 || this.size < position[1] + size) {
             throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => [...Array(size)]);
@@ -56,24 +78,65 @@ class Garden {
     }
 
     evaluation() {
-        let horizonContinuity=new Array(this.size);
-        let verticalContinuity=new Array(this.size);
-        for(let i=0;i<this.size;i++){
-            horizonContinuity[i]=true;
-            verticalContinuity[i]=true;
-            for(let j=0;j<this.size;j++){
-                if(this.entity[this.board[i][j]].distance==1){
-                    this.score+=1;
+        let continuity = {
+            horizon: {
+                head: 1,
+                end: 1
+            },
+            vertical: {
+                head: 1,
+                end: 1
+            }
+        };
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.entity.distance[this.board[i][j]] == 1) {
+                    this.score += 1;
+                    if (continuity.horizon.head) {
+                        this.score += 1;
+                    }
                 }
-                else{
-                    horizonContinuity[i]=false;
+                else if (continuity.horizon.head) {
+                    continuity.horizon.head = 2;
                 }
-                if(this.entity[this.board[j][i]].distance!=1){
-                    verticalContinuity[i]=false;
+                if (continuity.horizon.end) {
+                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
+                        this.score += 1;
+                    }
+                    else {
+                        continuity.horizon.end = 2;
+                    }
+                }
+                if (continuity.vertical.head) {
+                    if (this.entity.distance[this.board[j][i]] == 1) {
+                        this.score += 1;
+                    }
+                    else {
+                        continuity.vertical.head = 2;
+                    }
+                }
+                if (continuity.vertical.end) {
+                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
+                        this.score += 1;
+                    }
+                    else {
+                        continuity.vertical.end = 2;
+                    }
                 }
             }
+            if (continuity.horizon.head == 2) {
+                continuity.horizon.head = 0;
+            }
+            if (continuity.horizon.end == 2) {
+                continuity.horizon.end = 0;
+            }
+            if (continuity.vertical.head == 2) {
+                continuity.vertical.head = 0;
+            }
+            if (continuity.vertical.end == 2) {
+                continuity.vertical.end = 0;
+            }
         }
-        
     }
 }
 
