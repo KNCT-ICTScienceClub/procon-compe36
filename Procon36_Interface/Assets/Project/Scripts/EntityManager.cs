@@ -127,7 +127,7 @@ public class EntityManager : MonoBehaviour
         /// </summary>
         // 実装はしていないがこの配列を使えば最初の状態に戻ることができる
         // 必要なさそうな気がするから消しても良いが、Initialization関数の中身をうまいことしないいけないかも => リセット機能つくります
-        int[,] initialProblem;
+        public int[,] initialProblem;
         /// <summary>
         /// 現在の問題の状態を表す
         /// </summary>
@@ -390,7 +390,7 @@ public class EntityManager : MonoBehaviour
         /// </summary>
         public Vector2 Index =>
                 Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)
-                ? (hit.collider.gameObject.CompareTag("Entity") ? hit.collider.GetComponent<IndexManager>().Index : Vector2.zero)
+                ? (hit.collider.gameObject.CompareTag("Entity") ? hit.collider.GetComponent<Entity>().Position : Vector2.zero)
                 : Vector2.zero;
         /// <summary>
         /// 範囲選択の大きさ
@@ -470,8 +470,10 @@ public class EntityManager : MonoBehaviour
     void OnValidate()
     {
         // テーブルやカメラを動かす
-        Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
-        tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
+        // Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
+        // tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
+        Camera.main.transform.position = new Vector3(0, 0.88f * fieldSize + 1.15f, 0);
+        tableFrame.transform.position = new Vector3(0, 0f, 0);
         tableFrame.GetComponent<TableManager>().Resize(fieldSize);
     }
 
@@ -481,9 +483,22 @@ public class EntityManager : MonoBehaviour
         procon = receptionFlag ? new() : new(fieldSize, randomFlag);
         fieldSize = procon.Size;
         // テーブルやカメラを動かす
-        Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
-        tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
+        // Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
+        // tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
+        Camera.main.transform.position = new Vector3(0, 0.88f * fieldSize + 1.15f, 0);
+        tableFrame.transform.position = new Vector3(0, 0f, 0);
         tableFrame.GetComponent<TableManager>().Resize(fieldSize);
+        // 新しい方、フィールドサイズの数だけのエンティティしか生成しない
+        for (int i = 0; i < fieldSize; i++)
+        {
+            for (int j = 0; j < fieldSize; j++)
+            {
+                // この数値指定でいい感じ
+                GameObject entity = Instantiate(originalEntity, new Vector3(-fieldSize / 2f + 0.5f + j, 0.5f, fieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
+                entity.name = $"Entity ({i}, {j})";
+                entity.GetComponent<Entity>().Initialize(procon.initialProblem[i, j], new(i, j));
+            }
+        }
         for (int i = 0; i < 24; i++)
         {
             for (int j = 0; j < 24; j++)
@@ -493,7 +508,8 @@ public class EntityManager : MonoBehaviour
                 procon.entities[i, j].transform.SetParent(entityParent.transform);
                 procon.entities[i, j].SetActive(i < fieldSize && j < fieldSize);
                 // 配列の添え字を割り当てる
-                procon.entities[i, j].GetComponent<IndexManager>().Index = new(j, i);
+                // procon.entities[i, j].GetComponent<IndexManager>().Index = new(j, i);
+                procon.entities[i, j].GetComponent<Entity>().Position = new(i, j);
                 if (j != 23)
                 {
                     // 垂直方向のフレームをコピーする
