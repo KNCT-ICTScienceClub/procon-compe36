@@ -4,8 +4,9 @@ using TMPro;
 public class Entity : MonoBehaviour
 {
     [SerializeField] private TextMeshPro numberField;
-    public TextMeshPro NumberField => numberField;
+    [SerializeField] private MeshRenderer meshRenderer;
     public Vector2 Position { get; set; }
+    public int Number { get; set; } = 0;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -17,5 +18,11 @@ public class Entity : MonoBehaviour
     void Update()
     {
         
+    }
+
+    public void Initialize(int number, Vector2 position)
+    {
+        numberField.text = number.ToString();
+        Position = position;
     }
 }
