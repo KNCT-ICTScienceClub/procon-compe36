@@ -2,11 +2,8 @@ const fs = require('fs');
 
 class Procon {
     answer = [];
-
     board;
-
     size;
-
     timer = new Timer();
 
     get turn() {
@@ -29,24 +26,21 @@ class Procon {
         }
     }
 
-    engage(board, position, size, reverse = false) {
-        if (!board[0]?.length) {
-            throw new TypeError("boardの引数は2次元配列を指定してください.\n問題箇所--->engage(board=" + board + "...");
-        }
-        else if ((position?.length ?? 0) < 2) {
+    engage(position, size, reverse = false) {
+        if ((position?.length ?? 0) < 2) {
             throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
         }
-        else if (board[0].length < position[0] + size || board.length < position[1] + size) {
+        else if (this.size < position[0] + size || this.size < position[1] + size) {
             throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => new Array(size).fill(0));
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    area[i][j] = board[i + position[1]][j + position[0]];
+                    area[i][j] = this.board[i + position[1]][j + position[0]];
                 }
                 else {
-                    area[i][j] = board[j + position[1]][i + position[0]];
+                    area[i][j] = this.board[j + position[1]][i + position[0]];
                 }
             }
         }
@@ -54,10 +48,10 @@ class Procon {
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
-                    board[i + position[1]][j + position[0]] = area[j][i];
+                    this.board[i + position[1]][j + position[0]] = area[j][i];
                 }
                 else {
-                    board[i + position[1]][j + position[0]] = area[i][j];
+                    this.board[i + position[1]][j + position[0]] = area[i][j];
                 }
             }
         }
@@ -66,7 +60,7 @@ class Procon {
 
     turnAdd(position, size) {
         this.answer.push(new Order(position, size));
-        this.engage(this.board, position, size);
+        this.engage(position, size);
     }
 
     turnBack() {
@@ -74,13 +68,13 @@ class Procon {
             throw new Error("Procon.answer値が存在しないためこれ以上手数を戻すことはできません.\n問題箇所--->turnBack();");
         }
         let answer = this.answer.pop();
-        this.engage(this.board, answer.position, answer.size, true);
+        this.engage(answer.position, answer.size, true);
     }
 
     #makeRandomProblem(size) {
         let count = -1;
-        let zeroFill=new Array(size).fill(0);
-        let entities = [...zeroFill].map(()=>[...zeroFill].map(() => Math.floor((count += 1) / 2)));
+        let zeroFill = new Array(size).fill(0);
+        let entities = [...zeroFill].map(() => [...zeroFill].map(() => Math.floor((count += 1) / 2)));
         let array = entities.flat();
         for (let i = 0; i < size * size - 1; i++) {
             let random = Math.floor(Math.random() * (size * size - i - 1)) + i + 1;

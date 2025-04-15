@@ -8,7 +8,7 @@ let procon=new Lampyrisma(4);
 procon.timer.start();
 console.log(procon.board);
 for(let i=0;i<16;i++){
-    console.log(procon.entities.matching(i));
+    console.log(procon.entity.matching(i));
 }
 console.log(procon.board);
 /*for(let i=0;i<100000;i++){
