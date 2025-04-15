@@ -5,7 +5,7 @@ const EntityInfo = require("./entityInfo");
 class Lampyrisma extends Procon {
     garden;
     encodedBoard;
-    entities;
+    entity;
 
     constructor(element) {
         super(element);
@@ -19,8 +19,8 @@ class Lampyrisma extends Procon {
                 return Math.abs(element) * 2 + 1;
             }
         }));
-        this.entities = new EntityInfo(this.encodedBoard);
-        this.garden = new Garden(this.encodedBoard, this.entities, 0, 0);
+        this.entity = new EntityInfo(this.encodedBoard);
+        this.garden = new Garden(this.encodedBoard, this.entity, 0, 0);
     }
 }
 
