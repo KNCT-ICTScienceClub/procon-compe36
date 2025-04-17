@@ -25,7 +25,6 @@ class EntityInfo {
     }
 
     copyInfo(source){
-        console.log(source.position);
         this.position=[...source.position];
         this.vector=[...source.vector];
         this.distance=[...source.distance];

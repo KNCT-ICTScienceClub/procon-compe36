@@ -14,34 +14,49 @@ class Garden {
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
-        console.log(board);
         this.score = 0;
         this.depth = depth;
         this.index = index;
     }
 
-    extendBranch() {
-        let twig = [];
-        for (let i = 0; i < this.size * this.size; i++) {
-            let result = this.entity.matching(i);
-            if (result) {
-                if (result.target[0] < 0 || this.size < result.target[0] + result.size || result.target[1] < 0 || this.size < result.target[1] + result.size) {
-                    //twig.push(result);
+    extendBranch(depth) {
+        if (depth != 0) {
+            let twig = [];
+            for (let i = 0; i < this.size * this.size; i++) {
+                let result = this.entity.matching(i);
+                if (result) {
+                    if (result.target[0] < 0 || this.size < result.target[0] + result.size || result.target[1] < 0 || this.size < result.target[1] + result.size) {
+                        //twig.push(result);
+                    }
+                    else {
+                        twig.unshift(result);
+                    }
                 }
-                else {
-                    twig.unshift(result);
+            }
+            if (twig.length != 0) {
+                twig.map((element, index) => {
+                    this.engage(element.target, element.size);
+                    this.branch.push(new Garden(this.board, this.entity, this.depth + 1, 1));
+                    this.branch[index].evaluation();
+                    if (this.branch[index].score > this.score) {
+                        this.branch[index].extendBranch(depth - 1);
+                    }
+                    this.engage(element.target, element.size, true);
+                });
+            } 
+            else {
+                if(this.size*this.size*5==this.score){
+                    console.log(this.board);
+                    console.log("depth:"+this.depth);
                 }
             }
         }
-        console.log(twig);
-        twig.map(element => {
-            this.engage(element.target, element.size);
-            this.branch.push(new Garden(this.board, this.entity, 1, 1));
-            this.engage(element.target, element.size, true);
-        });
-        this.branch.map(element => {
-            element.evaluation()
-        });
+        else {
+            if(this.size*this.size*5==this.score){
+                console.log(this.board);
+                console.log("depth:"+this.depth);
+            }
+        }
     }
 
     engage(position, size, reverse = false) {
@@ -67,7 +82,7 @@ class Garden {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
                     this.board[i + position[1]][j + position[0]] = area[j][i];
-                    this.entity.position[area[j][i]] = [i + position[1], j + position[0]];
+                    this.entity.position[area[j][i]] = [j + position[0], i + position[1]];
                     this.entity.update(area[j][i]);
                 }
                 else {
