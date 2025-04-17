@@ -19,7 +19,8 @@ class Lampyrisma extends Procon {
                 return Math.abs(element) * 2 + 1;
             }
         }));
-        this.entity = new EntityInfo(this.encodedBoard);
+        this.entity = new EntityInfo();
+        this.entity.initialize(this.encodedBoard);
         this.garden = new Garden(this.encodedBoard, this.entity, 0, 0);
     }
 }

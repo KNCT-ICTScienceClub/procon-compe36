@@ -1,19 +1,23 @@
+const EntityInfo = require("./entityInfo");
+
 class Garden {
     board;
     size;
     entity;
-    branch=[];
+    branch = [];
     score;
     depth;
     index;
 
     constructor(board, entity, depth, index) {
-        this.board = board;
         this.size = board.length;
+        this.board = board.map(array => [...array]);
+        this.entity = new EntityInfo();
+        this.entity.copyInfo(entity);
+        console.log(board);
         this.score = 0;
         this.depth = depth;
         this.index = index;
-        this.entity = entity;
     }
 
     extendBranch() {
@@ -30,15 +34,13 @@ class Garden {
             }
         }
         console.log(twig);
-        twig.map(element=>{
-            this.engage(element.target,element.size);
-            this.branch.push(new Garden(this.board,this.entity,1,1));
-            this.engage(element.target,element.size,true);
+        twig.map(element => {
+            this.engage(element.target, element.size);
+            this.branch.push(new Garden(this.board, this.entity, 1, 1));
+            this.engage(element.target, element.size, true);
         });
-        this.branch.map(element=>{
+        this.branch.map(element => {
             element.evaluation()
-            console.log(element.board);
-            console.log(element.score);
         });
     }
 
@@ -65,12 +67,12 @@ class Garden {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
                     this.board[i + position[1]][j + position[0]] = area[j][i];
-                    this.entity.position[area[j][i]] = [i, j];
+                    this.entity.position[area[j][i]] = [i + position[1], j + position[0]];
                     this.entity.update(area[j][i]);
                 }
                 else {
                     this.board[i + position[1]][j + position[0]] = area[i][j];
-                    this.entity.position[area[i][j]] = [j, i];
+                    this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
                     this.entity.update(area[i][j]);
                 }
             }

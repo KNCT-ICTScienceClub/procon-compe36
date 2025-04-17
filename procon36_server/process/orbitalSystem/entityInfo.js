@@ -4,7 +4,7 @@ class EntityInfo {
     direction;
     distance;
 
-    constructor(board) {
+    initialize(board){
         let size = board.length;
         this.position = new Array(size * size);
         this.vector = new Array(size * size);
@@ -22,6 +22,14 @@ class EntityInfo {
                 }
             }
         }
+    }
+
+    copyInfo(source){
+        console.log(source.position);
+        this.position=[...source.position];
+        this.vector=[...source.vector];
+        this.distance=[...source.distance];
+        this.direction=[...source.direction];
     }
 
     update(value) {
