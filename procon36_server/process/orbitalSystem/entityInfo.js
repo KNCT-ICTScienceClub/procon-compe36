@@ -4,7 +4,7 @@ class EntityInfo {
     direction;
     distance;
 
-    initialize(board){
+    initialize(board) {
         let size = board.length;
         this.position = new Array(size * size);
         this.vector = new Array(size * size);
@@ -24,11 +24,11 @@ class EntityInfo {
         }
     }
 
-    copyInfo(source){
-        this.position=[...source.position];
-        this.vector=[...source.vector];
-        this.distance=[...source.distance];
-        this.direction=[...source.direction];
+    copyInfo(source) {
+        this.position = [...source.position];
+        this.vector = [...source.vector];
+        this.distance = [...source.distance];
+        this.direction = [...source.direction];
     }
 
     update(value) {
@@ -42,37 +42,34 @@ class EntityInfo {
     }
 
     matching(value) {
-        if (this.distance[value] != 1) {
-            let target = [...this.position[value]];
-            switch (this.direction[value]) {
-                case 3:
-                case 15:
-                    target[0] += 1;
-                    break;
-                case 7:
-                case 14:
-                    target[1] += 1;
-                    break;
-                case 5:
-                case 35:
-                    target[0] += 1;
-                    target[1] += 1;
-                    break;
-            }
-            if (this.direction[value] % 3 == 0) {
-                target[0] -= this.vector[value][1];
-            }
-            if (this.direction[value] % 5 == 0) {
-                target[0] += this.vector[value][0];
-                target[1] += this.vector[value][0];
-            }
-            if (this.direction[value] % 7 == 0) {
-                target[1] += this.vector[value][1];
-            }
-            return { target: target, size: this.distance[value] };
+        let target = [...this.position[value]];
+        switch (this.direction[value]) {
+            case 3:
+            case 15:
+                target[0] += 1;
+                break;
+            case 7:
+            case 14:
+                target[1] += 1;
+                break;
+            case 5:
+            case 35:
+                target[0] += 1;
+                target[1] += 1;
+                break;
         }
-        return false;
+        if (this.direction[value] % 3 == 0) {
+            target[0] -= this.vector[value][1];
+        }
+        if (this.direction[value] % 5 == 0) {
+            target[0] += this.vector[value][0];
+            target[1] += this.vector[value][0];
+        }
+        if (this.direction[value] % 7 == 0) {
+            target[1] += this.vector[value][1];
+        }
+        return { target: target, size: this.distance[value] };
     }
 }
 
-module.exports=EntityInfo;
+module.exports = EntityInfo;

@@ -14,47 +14,46 @@ class Garden {
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
-        this.score = 0;
+        this.evaluation();
         this.depth = depth;
         this.index = index;
     }
 
     extendBranch(depth) {
         if (depth != 0) {
-            let twig = [];
+            let suggest = [];
             for (let i = 0; i < this.size * this.size; i++) {
-                let result = this.entity.matching(i);
-                if (result) {
-                    if (result.target[0] < 0 || this.size < result.target[0] + result.size || result.target[1] < 0 || this.size < result.target[1] + result.size) {
-                        //twig.push(result);
-                    }
-                    else {
-                        twig.unshift(result);
+                if (this.entity.distance[i] != 1) {
+                    let result = this.entity.matching(i)
+                    if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
+                        suggest.push(result);
                     }
                 }
             }
-            if (twig.length != 0) {
-                twig.map((element, index) => {
-                    this.engage(element.target, element.size);
-                    this.branch.push(new Garden(this.board, this.entity, this.depth + 1, 1));
-                    this.branch[index].evaluation();
-                    if (this.branch[index].score > this.score) {
-                        this.branch[index].extendBranch(depth - 1);
-                    }
-                    this.engage(element.target, element.size, true);
-                });
-            } 
-            else {
-                if(this.size*this.size*5==this.score){
-                    console.log(this.board);
-                    console.log("depth:"+this.depth);
+            suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
+            for (let i = 0; i < suggest.length - 1; i++) {
+                if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
+                    delete suggest[i];
                 }
             }
+            suggest.map(element => {
+                this.engage(element.target, element.size);
+                this.branch.push(new Garden(this.board, this.entity, this.depth + 1, 1));
+                this.engage(element.target, element.size, true);
+            });
+            this.branch.map(element => {
+                if (element.score == this.size * this.size * 5) {
+                    element.extendBranch(0);
+                }
+                else if (element.score <= this.score) {
+                    element=undefined;
+                }
+            });
         }
         else {
-            if(this.size*this.size*5==this.score){
+            if (this.score == this.size * this.size * 5) {
                 console.log(this.board);
-                console.log("depth:"+this.depth);
+                console.log("depth:" + this.depth);
             }
         }
     }
@@ -65,6 +64,9 @@ class Garden {
         }
         else if (position[0] < 0 || this.size < position[0] + size || position[1] < 0 || this.size < position[1] + size) {
             throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
+        }
+        else if (size < 2) {
+            throw new RangeError("sizeは2以上の値を選択してください.\n問題箇所--->engage(board=<object>,position=...,size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => [...Array(size)]);
         for (let i = 0; i < size; i++) {
@@ -95,6 +97,7 @@ class Garden {
     }
 
     evaluation() {
+        this.score = 0;
         let continuity = {
             horizon: {
                 head: 1,
