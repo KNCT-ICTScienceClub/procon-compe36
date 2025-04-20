@@ -42,33 +42,47 @@ class EntityInfo {
     }
 
     matching(value) {
-        let target = [...this.position[value]];
+        let target = new Target(this.position[value],this.distance[value]);
         switch (this.direction[value]) {
             case 3:
             case 15:
-                target[0] += 1;
+                target.position[0] += 1;
                 break;
             case 7:
             case 14:
-                target[1] += 1;
+                target.position[1] += 1;
                 break;
             case 5:
             case 35:
-                target[0] += 1;
-                target[1] += 1;
+                target.position[0] += 1;
+                target.position[1] += 1;
                 break;
         }
         if (this.direction[value] % 3 == 0) {
-            target[0] -= this.vector[value][1];
+            target.position[0] -= this.vector[value][1];
         }
         if (this.direction[value] % 5 == 0) {
-            target[0] += this.vector[value][0];
-            target[1] += this.vector[value][0];
+            target.position[0] += this.vector[value][0];
+            target.position[1] += this.vector[value][0];
         }
         if (this.direction[value] % 7 == 0) {
-            target[1] += this.vector[value][1];
+            target.position[1] += this.vector[value][1];
         }
-        return { target: target, size: this.distance[value] };
+        return target;
+    }
+
+    adjusting(value){
+        let target = new Target(this.position[value],this.distance[value]);
+        return target;
+    }
+}
+
+class Target{
+    position;
+    size;
+    constructor(position,size){
+        this.position=[...position];
+        this.size=size;
     }
 }
 

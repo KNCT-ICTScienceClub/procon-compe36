@@ -49,11 +49,11 @@ class Lampyrisma extends Procon {
             else {
                 this.goal.map(index => {
                     this.garden = this.garden.branch[index];
-                    this.turnAdd(this.garden.order.target, this.garden.order.size);
+                    this.turnAdd(this.garden.order.position, this.garden.order.size);
                 });
                 break;
             }
-            this.turnAdd(this.garden.order.target, this.garden.order.size);
+            this.turnAdd(this.garden.order.position, this.garden.order.size);
             console.log("turn:" + this.turn + ",score:" + this.garden.score);
             this.garden.extendBranch(this.depth);
         }

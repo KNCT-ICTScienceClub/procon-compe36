@@ -35,22 +35,22 @@ class Garden {
         let suggest = [];
         for (let i = 0; i < this.size * this.size; i++) {
             if (this.entity.distance[i] != 1) {
-                let result = this.entity.matching(i);
-                if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
-                    suggest.push(result);
+                let target = this.entity.matching(i);
+                if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
+                    suggest.push(target);
                 }
             }
         }
-        suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
+        suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
-            if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
+            if (suggest[i].position[0] == suggest[i + 1].position[0] && suggest[i].position[1] == suggest[i + 1].position[1] && suggest[i].size == suggest[i + 1].size) {
                 delete suggest[i];
             }
         }
         suggest.map(element => {
-            this.engage(element.target, element.size);
+            this.engage(element.position, element.size);
             this.branch.push(new Garden(this.board, this.entity, element, this.width, this.depth + 1));
-            this.engage(element.target, element.size, true);
+            this.engage(element.position, element.size, true);
         });
         for (let i = 0; i < this.branch.length; i++) {
             if (this.branch[i].score <= this.score) {
@@ -190,22 +190,22 @@ class Trunk extends Garden {
         let suggest = [];
         for (let i = 0; i < this.size * this.size; i++) {
             if (this.entity.distance[i] != 1) {
-                let result = this.entity.matching(i);
-                if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
-                    suggest.push(result);
+                let target = this.entity.matching(i);
+                if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
+                    suggest.push(target);
                 }
             }
         }
-        suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
+        suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
-            if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
+            if (suggest[i].position[0] == suggest[i + 1].position[0] && suggest[i].position[1] == suggest[i + 1].position[1] && suggest[i].size == suggest[i + 1].size) {
                 delete suggest[i];
             }
         }
         suggest.map(element => {
-            this.engage(element.target, element.size);
+            this.engage(element.position, element.size);
             this.branch.push(new Trunk(this.board, this.entity, element, this.width, this.depth + 1));
-            this.engage(element.target, element.size, true);
+            this.engage(element.position, element.size, true);
         });
         for (let i = 0; i < this.branch.length; i++) {
             if (this.branch[i].score <= this.score) {
