@@ -31,18 +31,6 @@ class Garden {
         }
     }
 
-    pruning(array, depth,goal) {
-        if (depth == 1) {
-            if(this.branch[0].score==this.size*this.size*5){
-                goal=this.branch[0].index;
-            }
-            array.push({ index: this.branch[0].index[0], score: this.branch[0].score });
-        }
-        else {
-            this.branch.map(element => element.pruning(array, depth - 1));
-        }
-    }
-
     makeBranch(index) {
         let suggest = [];
         for (let i = 0; i < this.size * this.size; i++) {
@@ -73,6 +61,18 @@ class Garden {
         for (let i = 0; i < this.branch.length; i++) {
             this.branch[i].index = index.slice(1);
             this.branch[i].index.push(i);
+        }
+    }
+
+    pruning(array, depth, goal) {
+        if (depth == 1) {
+            if (this.branch[0].score == this.size * this.size * 5) {
+                goal.push( this.branch[0].index);
+            }
+            array.push({ index: this.branch[0].index[0], score: this.branch[0].score });
+        }
+        else {
+            this.branch.map(element => element.pruning(array, depth - 1));
         }
     }
 
@@ -179,14 +179,14 @@ class Garden {
 }
 
 class Trunk extends Garden {
-    makeTrunk(depth) {
+    extendTrunk(depth) {
         if (depth != 0) {
-            this.makeBranch(this.index);
-            this.branch.map(element => element.makeTrunk(depth - 1));
+            this.makeTrunk(this.index);
+            this.branch.map(element => element.extendTrunk(depth - 1));
         }
     }
 
-    makeBranch(index) {
+    makeTrunk(index) {
         let suggest = [];
         for (let i = 0; i < this.size * this.size; i++) {
             if (this.entity.distance[i] != 1) {

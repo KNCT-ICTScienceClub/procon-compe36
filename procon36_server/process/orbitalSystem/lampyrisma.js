@@ -9,7 +9,7 @@ class Lampyrisma extends Procon {
     entity;
     width;
     depth;
-    goal = false;
+    goal = [];
 
     constructor(element, depth, width) {
         super(element);
@@ -30,18 +30,18 @@ class Lampyrisma extends Procon {
         this.entity.initialize(this.encodedBoard);
         this.garden = new Trunk(this.encodedBoard, this.entity, 0, this.width, 0);
         this.garden.index = [...Array(depth).fill(0)];
-        this.garden.makeTrunk(depth);
+        this.garden.extendTrunk(depth);
     }
 
     allLink() {
         while (true) {
             let highScoreIndex = [];
             this.garden.pruning(highScoreIndex, this.depth, this.goal);
-            if (!this.goal) {
+            if (this.goal.length == 0) {
                 highScoreIndex.sort((a, b) => b.score - a.score);
                 let duplicate = [...Array(this.width).fill(0)];
                 let i = 0;
-                while (highScoreIndex[0].score == highScoreIndex[i].score) {
+                while (highScoreIndex[0].score == highScoreIndex[i].score && i < highScoreIndex.length) {
                     duplicate[highScoreIndex[i++].index]++;
                 }
                 this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
@@ -54,7 +54,7 @@ class Lampyrisma extends Procon {
                 break;
             }
             this.turnAdd(this.garden.order.target, this.garden.order.size);
-            console.log("turn:"+this.turn+",score:"+this.garden.score);
+            console.log("turn:" + this.turn + ",score:" + this.garden.score);
             this.garden.extendBranch(this.depth);
         }
     }
