@@ -6,55 +6,73 @@ class Garden {
     entity;
     branch = [];
     score;
+    width;
     depth;
-    index;
+    index = [];
+    order;
 
-    constructor(board, entity, depth, index) {
+    constructor(board, entity, order, width, depth) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
         this.evaluation();
+        this.order = order;
+        this.width = width;
         this.depth = depth;
-        this.index = index;
     }
 
     extendBranch(depth) {
-        if (depth != 0) {
-            let suggest = [];
-            for (let i = 0; i < this.size * this.size; i++) {
-                if (this.entity.distance[i] != 1) {
-                    let result = this.entity.matching(i)
-                    if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
-                        suggest.push(result);
-                    }
-                }
-            }
-            suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
-            for (let i = 0; i < suggest.length - 1; i++) {
-                if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
-                    delete suggest[i];
-                }
-            }
-            suggest.map(element => {
-                this.engage(element.target, element.size);
-                this.branch.push(new Garden(this.board, this.entity, this.depth + 1, 1));
-                this.engage(element.target, element.size, true);
-            });
-            this.branch.map(element => {
-                if (element.score == this.size * this.size * 5) {
-                    element.extendBranch(0);
-                }
-                else if (element.score <= this.score) {
-                    element=undefined;
-                }
-            });
+        if (depth == 1) {
+            this.makeBranch(this.index);
         }
         else {
-            if (this.score == this.size * this.size * 5) {
-                console.log(this.board);
-                console.log("depth:" + this.depth);
+            this.branch.map(element => element.extendBranch(depth - 1));
+        }
+    }
+
+    pruning(array, depth,goal) {
+        if (depth == 1) {
+            if(this.branch[0].score==this.size*this.size*5){
+                goal=this.branch[0].index;
             }
+            array.push({ index: this.branch[0].index[0], score: this.branch[0].score });
+        }
+        else {
+            this.branch.map(element => element.pruning(array, depth - 1));
+        }
+    }
+
+    makeBranch(index) {
+        let suggest = [];
+        for (let i = 0; i < this.size * this.size; i++) {
+            if (this.entity.distance[i] != 1) {
+                let result = this.entity.matching(i);
+                if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
+                    suggest.push(result);
+                }
+            }
+        }
+        suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
+        for (let i = 0; i < suggest.length - 1; i++) {
+            if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
+                delete suggest[i];
+            }
+        }
+        suggest.map(element => {
+            this.engage(element.target, element.size);
+            this.branch.push(new Garden(this.board, this.entity, element, this.width, this.depth + 1));
+            this.engage(element.target, element.size, true);
+        });
+        for (let i = 0; i < this.branch.length; i++) {
+            if (this.branch[i].score <= this.score) {
+                delete this.branch[i];
+            }
+        }
+        this.branch = this.branch.filter(element => element).toSorted((a, b) => b.score - a.score).slice(0, this.width);
+        for (let i = 0; i < this.branch.length; i++) {
+            this.branch[i].index = index.slice(1);
+            this.branch[i].index.push(i);
         }
     }
 
@@ -160,4 +178,47 @@ class Garden {
     }
 }
 
-module.exports = Garden;
+class Trunk extends Garden {
+    makeTrunk(depth) {
+        if (depth != 0) {
+            this.makeBranch(this.index);
+            this.branch.map(element => element.makeTrunk(depth - 1));
+        }
+    }
+
+    makeBranch(index) {
+        let suggest = [];
+        for (let i = 0; i < this.size * this.size; i++) {
+            if (this.entity.distance[i] != 1) {
+                let result = this.entity.matching(i);
+                if (0 <= result.target[0] && result.target[0] + result.size <= this.size && 0 <= result.target[1] && result.target[1] + result.size <= this.size) {
+                    suggest.push(result);
+                }
+            }
+        }
+        suggest.sort((a, b) => a.target[0] == b.target[0] ? (a.target[1] == b.target[1] ? a.size - b.size : a.target[1] - b.target[1]) : a.target[0] - b.target[0]);
+        for (let i = 0; i < suggest.length - 1; i++) {
+            if (suggest[i].target[0] == suggest[i + 1].target[0] && suggest[i].target[1] == suggest[i + 1].target[1] && suggest[i].size == suggest[i + 1].size) {
+                delete suggest[i];
+            }
+        }
+        suggest.map(element => {
+            this.engage(element.target, element.size);
+            this.branch.push(new Trunk(this.board, this.entity, element, this.width, this.depth + 1));
+            this.engage(element.target, element.size, true);
+        });
+        for (let i = 0; i < this.branch.length; i++) {
+            if (this.branch[i].score <= this.score) {
+                delete this.branch[i];
+            }
+        }
+        this.branch = this.branch.filter(element => element).toSorted((a, b) => b.score - a.score).slice(0, this.width);
+        for (let i = 0; i < this.branch.length; i++) {
+            this.branch[i].index = index.slice(1);
+            this.branch[i].index.push(i);
+        }
+    }
+}
+
+module.exports.Garden = Garden;
+module.exports.Trunk = Trunk;
