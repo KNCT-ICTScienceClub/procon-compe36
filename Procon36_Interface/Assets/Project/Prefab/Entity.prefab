@@ -16,7 +16,7 @@ GameObject:
   - component: {fileID: 5501589070974100471}
   m_Layer: 0
   m_Name: Entity
-  m_TagString: Untagged
+  m_TagString: Entity
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numberField: {fileID: 3118703271640656161}
-  meshRenderer: {fileID: 0}
+  meshRenderer: {fileID: 1723959566562587467}
 --- !u!33 &3691364831774683776
 MeshFilter:
   m_ObjectHideFlags: 0
