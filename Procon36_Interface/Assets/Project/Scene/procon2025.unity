@@ -795,6 +795,37 @@ MonoBehaviour:
   bottom: {fileID: 232142231}
   right: {fileID: 427856911}
   left: {fileID: 1773214139}
+--- !u!1 &617261230
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 617261231}
+  m_Layer: 0
+  m_Name: ApplicationManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &617261231
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 617261230}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &734065212
 GameObject:
   m_ObjectHideFlags: 0
@@ -2110,7 +2141,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fieldSize: 6
-  originalEntity: {fileID: 3141449736491810339, guid: 8f5ca9f08871cc444ac128e483dc8399, type: 3}
+  entityPrefab: {fileID: 3141449736491810339, guid: 8f5ca9f08871cc444ac128e483dc8399, type: 3}
   originalVerticalFrame: {fileID: 1808672094}
   originalHorizontalFrame: {fileID: 823903972}
   originalEntityText: {fileID: 1154176379}
@@ -2122,6 +2153,7 @@ MonoBehaviour:
   statusText: {fileID: 1460118697}
   receptionFlag: 0
   randomFlag: 1
+  entities: []
 --- !u!1 &1547032977
 GameObject:
   m_ObjectHideFlags: 0
@@ -2891,6 +2923,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1377394566}
+  - {fileID: 617261231}
   - {fileID: 1804284351}
   - {fileID: 1469473465}
   - {fileID: 350558349}

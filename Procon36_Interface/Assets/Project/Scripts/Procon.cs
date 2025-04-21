@@ -5,11 +5,82 @@ using UnityEngine;
 using TMPro;
 
 /// <summary>
-/// 今回のプロコン必要な関数をまとめたクラス
+/// このアプリケーションを管理するクラス
 /// </summary>
-[Serializable]
-class Procon
+public class Procon
 {
+    [SerializeField] private bool isUseJSON = false;
+    [SerializeField] private bool isRandom = true;
+    [SerializeField] private List<(Vector2, Vector2)> pairPositions = new();
+    public List<(Vector2, Vector2)> PairPositions
+    {
+        get
+        {
+            (Vector2, Vector2) pair;
+            for (int i = 0; i < size - 1; i++)
+            {
+                for (int j = 0; j < size - 1; j++)
+                {
+                    if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
+                    {
+                        pair = (new Vector2(i, j), new Vector2(i + 1, j + 1));
+                        if (!pairPositions.Contains(pair))
+                        {
+                            pairPositions.Add(pair);
+                        }
+                    }
+                }
+            }
+            return pairPositions;
+        }
+    }
+    /// <summary>
+    /// 問題の初期状態
+    /// </summary>
+    // 実装はしていないがこの配列を使えば最初の状態に戻ることができる
+    // 必要なさそうな気がするから消しても良いが、Initialization関数の中身をうまいことしないいけないかも => リセット機能つくります
+    public int[,] initialProblem;
+    /// <summary>
+    /// 現在の問題の状態を表す
+    /// </summary>
+    int[,] problem = new int[24, 24];
+    /// <summary>
+    /// フィールドのサイズを表す
+    /// </summary>
+    private int size;
+    /// <summary>
+    /// 問題フィールドのサイズ
+    /// </summary>
+    public int Size => size;
+    /// <summary>
+    /// 操作手順を表す
+    /// </summary>
+    List<Order> orders = new();
+    /// <summary>
+    /// 操作を記録するためのクラス
+    /// </summary>
+    class Order
+    {
+        /// <summary>
+        /// コンストラクタ(Vector2で指定するのに注意)
+        /// </summary>
+        /// <param name="position">座標</param>
+        /// <param name="size">サイズ</param>
+        public Order(Vector2 position, int size)
+        {
+            this.position = position;
+            this.size = size;
+        }
+        /// <summary>
+        /// 座標
+        /// </summary>
+        public Vector2 position;
+        /// <summary>
+        /// サイズ
+        /// </summary>
+        public int size;
+    }
+
     /// <summary>
     /// 外部からJSONを読み込んで問題を生成する
     /// </summary>
@@ -42,80 +113,9 @@ class Procon
             size++;
         }
         this.size = size;
-        MakeRandomProblem(randomFlag);
+        MakeProblem(randomFlag);
     }
-    /// <summary>
-    /// コピーしたエンティティの情報
-    /// </summary>
-    public GameObject[,] entities = new GameObject[24, 24];
-    /// <summary>
-    /// コピーしたフレームの情報が入るクラス
-    /// </summary>
-    public class Frame
-    {
-        /// <summary>
-        /// 垂直方向のフレームの情報
-        /// </summary>
-        public GameObject[,] vertical = new GameObject[24, 23];
-        /// <summary>
-        /// 垂直方向のフレームの情報
-        /// </summary>
-        public GameObject[,] horizon = new GameObject[23, 24];
-    }
-    /// <summary>
-    /// コピーしたフレームの情報
-    /// </summary>
-    public Frame frame = new();
-    /// <summary>
-    /// 問題の初期状態
-    /// </summary>
-    // 実装はしていないがこの配列を使えば最初の状態に戻ることができる
-    // 必要なさそうな気がするから消しても良いが、Initialization関数の中身をうまいことしないいけないかも => リセット機能つくります
-    public int[,] initialProblem;
-    /// <summary>
-    /// 現在の問題の状態を表す
-    /// </summary>
-    int[,] problem = new int[24, 24];
-    /// <summary>
-    /// フィールドのサイズを表す
-    /// </summary>
-    private int size;
-    /// <summary>
-    /// 問題フィールドのサイズ
-    /// </summary>
-    public int Size => size;
-    /// <summary>
-    /// エンティティの数値を表す
-    /// </summary>
-    public GameObject[,] entityNumbers = new GameObject[24, 24];
-    /// <summary>
-    /// 操作手順を表す
-    /// </summary>
-    List<Order> orders = new();
-    /// <summary>
-    /// 操作を記録するためのクラス
-    /// </summary>
-    class Order
-    {
-        /// <summary>
-        /// コンストラクタ(Vector2で指定するのに注意)
-        /// </summary>
-        /// <param name="position">座標</param>
-        /// <param name="size">サイズ</param>
-        public Order(Vector2 position, int size)
-        {
-            this.position = position;
-            this.size = size;
-        }
-        /// <summary>
-        /// 座標
-        /// </summary>
-        public Vector2 position;
-        /// <summary>
-        /// サイズ
-        /// </summary>
-        public int size;
-    }
+    
     /// <summary>
     /// 問題を初期化する関数
     /// 使用しない場所の数値はとりあえず999にしとく
@@ -141,8 +141,8 @@ class Procon
     /// <summary>
     /// 問題を自動生成する関数
     /// </summary>
-    /// <param name="randomFlag">問題をシャッフルするかどうか</param>
-    void MakeRandomProblem(bool randomFlag)
+    /// <param name="isRandom">問題をシャッフルするかどうか</param>
+    void MakeProblem(bool isRandom)
     {
         initialProblem = new int[size, size];
         // 一旦一次元で配列を作る
@@ -153,7 +153,7 @@ class Procon
         {
             array[i] = (int)Mathf.Floor((count += 1) / 2);
         }
-        if (randomFlag)
+        if (isRandom)
         {
             // 前回も使用したがフィッシャー–イェーツのシャッフルによってシャッフルを行う
             for (int i = 0; i < size * size - 1; i++)
@@ -207,8 +207,6 @@ class Procon
         }
         // orderに操作を追加
         orders.Add(new(position, size));
-        // ボードの数値が変わったので表示を更新
-        SetColor();
     }
     /// <summary>
     /// 一手操作を戻す関数
@@ -246,50 +244,25 @@ class Procon
         ReverseEngage(orders[orders.Count - 1].position, orders[orders.Count - 1].size);
         // orderの操作を削除
         orders.RemoveAt(orders.Count - 1);
-        // ボードの数値が変わったので表示を更新
-        SetColor();
     }
-    /// <summary>
-    /// エンティティをボードの数値に合わせて色を付ける
-    /// </summary>
-    public void SetColor()
-    {
-        for (int i = 0; i < size; i++)
-        {
-            for (int j = 0; j < size; j++)
-            {
-                Renderer renderer = entities[i, j].GetComponent<Renderer>();
-                // 数値によって同じ色相の色を3個作り普通の色と、彩度を半分にした色と、明度を半分にした色に分けて色をつける
-                renderer.material.color = Color.HSVToRGB((float)(problem[i, j] % Mathf.Ceil(size * size / 6)) / (size * size / 6), problem[i, j] < Mathf.Ceil(size * size / 6) ? 0.5f : 1f, problem[i, j] > Mathf.Ceil(size * size / 6) * 2 ? 0.5f : 1f);
-                // フレームの表示、非表示も設定する
-                if (i != size - 1)
-                {
-                    frame.horizon[i, j].SetActive(problem[i, j] == problem[i + 1, j]);
-                }
-                if (j != size - 1)
-                {
-                    frame.vertical[i, j].SetActive(problem[i, j] == problem[i, j + 1]);
-                }
-                // 数値をテキストメッシュに反映
-                entityNumbers[i, j].GetComponent<TextMeshProUGUI>().text = string.Format("{0:000}", problem[i, j]);
-            }
-        }
-    }
+    
     /// <summary>
     /// 隣り合った数値が同じである要素の数
     /// </summary>
-    public int MatchCount
+    public int PairsCount
     {
         get
         {
             int count = 0;
-            foreach (GameObject element in frame.vertical)
+            for (int i = 0; i < size - 1; i++)
             {
-                count += element.activeSelf ? 1 : 0;
-            }
-            foreach (GameObject element in frame.horizon)
-            {
-                count += element.activeSelf ? 1 : 0;
+                for (int j = 0; j < size - 1; j++)
+                {
+                    if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
+                    {
+                        count++;
+                    }
+                }
             }
             return count;
         }
@@ -298,88 +271,12 @@ class Procon
     /// 現在のターン数を調べる
     /// </summary>
     public int Turn => orders.Count;
-    /// <summary>
-    /// 範囲を選択する時の基準となるエンティティの座標
-    /// </summary>
-    [NonSerialized] public Vector2 initialPosition;
-    /// <summary>
-    /// 範囲を選択する時の基準となるエンティティの持つ配列の添字
-    /// </summary>
-    [NonSerialized] public Vector2 initialIndex;
-    /// <summary>
-    /// 選択範囲のフレームの座標
-    /// </summary>
-    [NonSerialized] public Vector3 holdArea = new(-1, -1, -1);
-    /// <summary>
-    /// 範囲選択中であるかを判断するフラグ
-    /// </summary>
-    [NonSerialized] public bool holdFlag = false;
-    /// <summary>
-    /// 範囲選択が始まったことを判断するフラグ
-    /// </summary>
-    [NonSerialized] public bool initialFlag = false;
-    /// <summary>
-    /// マウスがエンティティにヒットしたことを判断するフラグ
-    /// </summary>
-    public bool HitFlag => Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit) && hit.collider.gameObject.CompareTag("Entity");
-    /// <summary>
-    /// マウスが選択したエンティティの座標
-    /// </summary>
-    public Vector2 Position =>
-            Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)
-            ? (hit.collider.gameObject.CompareTag("Entity") ? new Vector2(hit.collider.gameObject.transform.position.x, hit.collider.gameObject.transform.position.z) : Vector2.zero)
-            : Vector2.zero;
-    /// <summary>
-    /// マウスが選択したエンティティの持つ配列の添え字
-    /// </summary>
-    public Vector2 Index =>
-            Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit)
-            ? (hit.collider.gameObject.CompareTag("Entity") ? hit.collider.GetComponent<Entity>().Position : Vector2.zero)
-            : Vector2.zero;
-    /// <summary>
-    /// 範囲選択の大きさ
-    /// </summary>
-    // なんかxの座標を同じにしたときの最小サイズ
-    public int AreaSize
-    {
-        get
-        {
-            int size;
-            if (Index.x - initialIndex.x > Index.y - initialIndex.y)
-            {
-                size = (int)(Index.x - initialIndex.x) + 1;
-                if (initialIndex.y + size >= this.size)
-                {
-                    return this.size - (int)initialIndex.y;
-                }
-            }
-            else
-            {
-                size = (int)(Index.y - initialIndex.y) + 1;
-                if (initialIndex.x + size >= this.size)
-                {
-                    return this.size - (int)initialIndex.x;
-                }
-            }
-            return size;
-        }
-    }
-    /// <summary>
-    /// 各パラメータの初期化が行われる
-    /// </summary>
-    public void SetInitial()
-    {
-        initialPosition = Position;
-        initialIndex = Index;
-        holdArea = Vector3.zero;
-        initialFlag = true;
-    }
 
     /// <summary>
     /// 問題jsonのクラスの形式
     /// </summary>
     [Serializable]
-    class ReceiveData
+    public class ReceiveData
     {
         public int startAt;
         public Problem problem = new();
@@ -399,7 +296,7 @@ class Procon
     /// 回答jsonのクラスの形式
     /// </summary>
     [Serializable]
-    class SendData
+    public class SendData
     {
         public Ops[] ops;
         [Serializable]
