@@ -52,11 +52,6 @@ class Garden {
             this.branch.push(new Garden(this.board, this.entity, element, this.width, this.depth + 1));
             this.engage(element.position, element.size, true);
         });
-        for (let i = 0; i < this.branch.length; i++) {
-            if (this.branch[i].score <= this.score) {
-                delete this.branch[i];
-            }
-        }
         this.branch = this.branch.filter(element => element).toSorted((a, b) => b.score - a.score).slice(0, this.width);
         for (let i = 0; i < this.branch.length; i++) {
             this.branch[i].index = index.slice(1);
@@ -66,13 +61,15 @@ class Garden {
 
     pruning(array, depth, goal) {
         if (depth == 1) {
-            if (this.branch[0].score == this.size * this.size * 5) {
-                goal.push( this.branch[0].index);
+            if (this.branch[0]?.score == this.size * this.size * 5) {
+                goal.push(this.branch[0].index);
             }
-            array.push({ index: this.branch[0].index[0], score: this.branch[0].score });
+            else {
+                array.push({ index: this.branch[0]?.index[0], score: this.branch[0]?.score });
+            }
         }
         else {
-            this.branch.map(element => element.pruning(array, depth - 1));
+            this.branch.map(element => element.pruning(array, depth - 1, goal));
         }
     }
 
@@ -220,5 +217,4 @@ class Trunk extends Garden {
     }
 }
 
-module.exports.Garden = Garden;
-module.exports.Trunk = Trunk;
+module.exports = Trunk;

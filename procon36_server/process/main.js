@@ -4,7 +4,9 @@ cd ./procon36_server/process
 
 const Lampyrisma=require("./orbitalSystem/lampyrisma");
 
-let procon=new Lampyrisma(24,4,4);
-procon.allLink();
-procon.timer.end();
-procon.timer.show();
+let lampyrisma=new Lampyrisma(8,10,3);
+lampyrisma.allLink();
+lampyrisma.makeProblemFile();
+lampyrisma.makeAnswerFile();
+lampyrisma.timer.end();
+lampyrisma.timer.show();

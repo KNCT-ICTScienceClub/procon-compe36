@@ -1,6 +1,5 @@
 const Procon = require("../utility/proconUtility");
-const Garden = require("./garden").Garden;
-const Trunk = require("./garden").Trunk;
+const Trunk = require("./garden");
 const EntityInfo = require("./entityInfo");
 
 class Lampyrisma extends Procon {
@@ -9,7 +8,7 @@ class Lampyrisma extends Procon {
     entity;
     width;
     depth;
-    goal = [];
+    goal;
 
     constructor(element, depth, width) {
         super(element);
@@ -36,8 +35,9 @@ class Lampyrisma extends Procon {
     allLink() {
         while (true) {
             let highScoreIndex = [];
-            this.garden.pruning(highScoreIndex, this.depth, this.goal);
-            if (this.goal.length == 0) {
+            let goal=[];
+            this.garden.pruning(highScoreIndex, this.depth, goal);
+            if (goal.length==0) {
                 highScoreIndex.sort((a, b) => b.score - a.score);
                 let duplicate = [...Array(this.width).fill(0)];
                 let i = 0;
@@ -47,9 +47,10 @@ class Lampyrisma extends Procon {
                 this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
             }
             else {
-                this.goal.map(index => {
+                goal[0].map(index => {
                     this.garden = this.garden.branch[index];
                     this.turnAdd(this.garden.order.position, this.garden.order.size);
+                    console.log("turn:" + this.turn + ",score:" + this.garden.score);
                 });
                 break;
             }
