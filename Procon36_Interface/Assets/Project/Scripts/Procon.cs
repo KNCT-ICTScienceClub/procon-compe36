@@ -2,13 +2,14 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 
 /// <summary>
-/// このアプリケーションを管理するクラス
+/// プロコンの問題を解く機能を持つクラス
 /// </summary>
+[Serializable]
 public class Procon
 {
+    [SerializeField, Range(4, 24)] private int fieldSize;
     [SerializeField] private bool isUseJSON = false;
     [SerializeField] private bool isRandom = true;
     [SerializeField] private List<(Vector2, Vector2)> pairPositions = new();
@@ -17,9 +18,9 @@ public class Procon
         get
         {
             (Vector2, Vector2) pair;
-            for (int i = 0; i < size - 1; i++)
+            for (int i = 0; i < fieldSize - 1; i++)
             {
-                for (int j = 0; j < size - 1; j++)
+                for (int j = 0; j < fieldSize - 1; j++)
                 {
                     if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
                     {
@@ -43,15 +44,11 @@ public class Procon
     /// <summary>
     /// 現在の問題の状態を表す
     /// </summary>
-    int[,] problem = new int[24, 24];
-    /// <summary>
-    /// フィールドのサイズを表す
-    /// </summary>
-    private int size;
+    public int[,] problem = new int[24, 24];
     /// <summary>
     /// 問題フィールドのサイズ
     /// </summary>
-    public int Size => size;
+    public int FieldSize => fieldSize;
     /// <summary>
     /// 操作手順を表す
     /// </summary>
@@ -89,13 +86,13 @@ public class Procon
         // 問題のJSONを読み込む
         string jsonFile = File.ReadAllText("../procon36_server/informationLog/problem.json", System.Text.Encoding.GetEncoding("utf-8"));
         ReceiveData receiveData = JsonUtility.FromJson<ReceiveData>(jsonFile);
-        size = receiveData.problem.field.size;
-        initialProblem = new int[size, size];
-        for (int i = 0; i < size; i++)
+        fieldSize = receiveData.problem.field.size;
+        initialProblem = new int[fieldSize, fieldSize];
+        for (int i = 0; i < fieldSize; i++)
         {
-            for (int j = 0; j < size; j++)
+            for (int j = 0; j < fieldSize; j++)
             {
-                initialProblem[i, j] = receiveData.problem.field.entities[i * size + j];
+                initialProblem[i, j] = receiveData.problem.field.entities[i * fieldSize + j];
             }
         }
         Initialize();
@@ -112,7 +109,7 @@ public class Procon
         {
             size++;
         }
-        this.size = size;
+        this.fieldSize = size;
         MakeProblem(randomFlag);
     }
     
@@ -127,7 +124,7 @@ public class Procon
         {
             for (int j = 0; j < 24; j++)
             {
-                if (i < size && j < size)
+                if (i < fieldSize && j < fieldSize)
                 {
                     problem[i, j] = initialProblem[i, j];
                 }
@@ -144,29 +141,29 @@ public class Procon
     /// <param name="isRandom">問題をシャッフルするかどうか</param>
     void MakeProblem(bool isRandom)
     {
-        initialProblem = new int[size, size];
+        initialProblem = new int[fieldSize, fieldSize];
         // 一旦一次元で配列を作る
-        int[] array = new int[size * size];
+        int[] array = new int[fieldSize * fieldSize];
         int count = -1;
         // 配列には[0, 0, 1, 1, 2, 2, 3 ...]と代入される
-        for (int i = 0; i < size * size; i++)
+        for (int i = 0; i < fieldSize * fieldSize; i++)
         {
             array[i] = (int)Mathf.Floor((count += 1) / 2);
         }
         if (isRandom)
         {
             // 前回も使用したがフィッシャー–イェーツのシャッフルによってシャッフルを行う
-            for (int i = 0; i < size * size - 1; i++)
+            for (int i = 0; i < fieldSize * fieldSize - 1; i++)
             {
-                int random = UnityEngine.Random.Range(i + 1, size * size);
+                int random = UnityEngine.Random.Range(i + 1, fieldSize * fieldSize);
                 (array[random], array[i]) = (array[i], array[random]);
             }
             // 一次元の配列を2次元に変換
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < fieldSize; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < fieldSize; j++)
                 {
-                    initialProblem[i, j] = array[i * size + j];
+                    initialProblem[i, j] = array[i * fieldSize + j];
                 }
             }
         }
@@ -254,9 +251,9 @@ public class Procon
         get
         {
             int count = 0;
-            for (int i = 0; i < size - 1; i++)
+            for (int i = 0; i < fieldSize - 1; i++)
             {
-                for (int j = 0; j < size - 1; j++)
+                for (int j = 0; j < fieldSize - 1; j++)
                 {
                     if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
                     {

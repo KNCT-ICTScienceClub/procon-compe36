@@ -1,10 +1,10 @@
 using System;
-using System.IO;
 using System.Text;
-using System.Collections.Generic;
-using TMPro;
-using UnityEngine;
 using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
 
 public class EntityManager : MonoBehaviour
 {
@@ -12,7 +12,7 @@ public class EntityManager : MonoBehaviour
     /// <summary>
     /// フィールドのサイズ
     /// </summary>
-    [SerializeField, Range(4, 24)] int fieldSize;
+    // [SerializeField, Range(4, 24)] int fieldSize;
     /// <summary>
     /// エンティティのプレハブ
     /// </summary>
@@ -167,34 +167,40 @@ public class EntityManager : MonoBehaviour
         // テーブルやカメラを動かす
         // Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
         // tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
-        Camera.main.transform.position = new Vector3(0, 0.88f * fieldSize + 1.15f, 0);
+        Camera.main.transform.position = new Vector3(0, 0.88f * procon.FieldSize + 1.15f, 0);
         tableFrame.transform.position = new Vector3(0, 0f, 0);
-        tableFrame.GetComponent<TableManager>().Resize(fieldSize);
+        tableFrame.GetComponent<TableManager>().Resize(procon.FieldSize);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        procon = receptionFlag ? new() : new(fieldSize, randomFlag);
-        fieldSize = procon.Size;
-        // テーブルやカメラを動かす
-        // Camera.main.transform.position = new Vector3(-12 + fieldSize / 2, 0.88f * fieldSize + 1.15f, 12 - fieldSize / 2);
-        // tableFrame.transform.position = new Vector3(-12 + fieldSize / 2, 0f, 12 - fieldSize / 2);
-        Camera.main.transform.position = new Vector3(0, 0.88f * fieldSize + 1.15f, 0);
-        tableFrame.transform.position = new Vector3(0, 0f, 0);
-        tableFrame.GetComponent<TableManager>().Resize(fieldSize);
-        // 新しい方、フィールドサイズの数だけのエンティティしか生成しない
-        entities = Enumerable.Repeat<List<Entity>>(new(fieldSize), fieldSize).Select(line => line = new(Enumerable.Repeat<Entity>(null, fieldSize))).ToList();
-        entities.ForEach(i => i.ForEach(j => Debug.Log(j)));
-        for (int i = 0; i < fieldSize; i++)
+        procon = receptionFlag ? new() : new(procon.FieldSize, randomFlag);
+        if (receptionFlag)
         {
-            for (int j = 0; j < fieldSize; j++)
+            // 回答のjsonファイルを読み込む
+            string jsonFile = System.IO.File.ReadAllText("../procon36_server/informationLog/answer.json", Encoding.GetEncoding("utf-8"));
+            sendData = JsonUtility.FromJson<Procon.SendData>(jsonFile);
+        }
+        // テーブルやカメラを動かす
+        Camera.main.transform.position = new Vector3(0, 0.88f * procon.FieldSize + 1.15f, 0);
+        tableFrame.transform.position = new Vector3(0, 0f, 0);
+        tableFrame.GetComponent<TableManager>().Resize(procon.FieldSize);
+        // 新しい方、フィールドサイズの数だけのエンティティしか生成しない
+        entities = Enumerable.Repeat<List<Entity>>(new(procon.FieldSize), procon.FieldSize).Select(line => line = new(Enumerable.Repeat<Entity>(null, procon.FieldSize))).ToList();
+        for (int i = 0; i < procon.FieldSize; i++)
+        {
+            for (int j = 0; j < procon.FieldSize; j++)
             {
                 // この数値指定でいい感じ
-                GameObject entity = Instantiate(entityPrefab, new Vector3(-fieldSize / 2f + 0.5f + j, 0.5f, fieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
+                GameObject entity = Instantiate(entityPrefab, new Vector3(-procon.FieldSize / 2f + 0.5f + j, 0.5f, procon.FieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
                 entity.name = $"Entity ({j}, {i})";
                 entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.initialProblem[i, j], new(j, i));
             }
+        }
+        if (receptionFlag)
+        {
+            StartCoroutine(Replay(0.5f));
         }
         // for (int i = 0; i < 24; i++)
         // {
@@ -228,24 +234,36 @@ public class EntityManager : MonoBehaviour
         //     }
         // }
         // procon.SetColor();
-        if (receptionFlag)
-        {
-            // 回答のjsonファイルを読み込む
-            string jsonFile = File.ReadAllText("../procon36_server/informationLog/answer.json", Encoding.GetEncoding("utf-8"));
-            Procon.SendData sendData = JsonUtility.FromJson<Procon.SendData>(jsonFile);
-            // 回転操作を行う
-            foreach (var ops in sendData.ops)
-            {
-                procon.Engage(new(ops.x, ops.y), ops.n);
-            }
-        }
         // ステータスを更新する
         // statusText.text = string.Format("turn:{0}\nmatch:{1}", procon.Turn, procon.PairsCount);
     }
 
+    Procon.SendData sendData;
+    private IEnumerator Replay(float seconds)
+    {
+        // 回転操作を行う
+        foreach (var ops in sendData.ops)
+        {
+            procon.Engage(new(ops.x, ops.y), ops.n);
+            yield return new WaitForSeconds(seconds);
+            entities.ForEach(line => line.ForEach(entities => Destroy(entities.gameObject)));
+            entities.Clear();
+            entities = Enumerable.Repeat<List<Entity>>(new(procon.FieldSize), procon.FieldSize).Select(line => line = new(Enumerable.Repeat<Entity>(null, procon.FieldSize))).ToList();
+            for (int i = 0; i < procon.FieldSize; i++)
+            {
+                for (int j = 0; j < procon.FieldSize; j++)
+                {
+                    // この数値指定でいい感じ
+                    GameObject entity = Instantiate(entityPrefab, new Vector3(-procon.FieldSize / 2f + 0.5f + j, 0.5f, procon.FieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
+                    entity.name = $"Entity ({j}, {i})";
+                    entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.problem[i, j], new(j, i));
+                }
+            }
+        }
+    } 
     // Update is called once per frame
     void Update()
-    {
+    {        
         // if (Input.GetMouseButtonDown(0))
         // {
         //     // 範囲選択がされていないときの処理
