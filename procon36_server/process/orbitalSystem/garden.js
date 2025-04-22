@@ -5,17 +5,22 @@ class Garden {
     size;
     entity;
     branch = [];
-    score;
+    score = 0;
     width;
     depth;
     index = [];
     order;
+    continuity;
 
     constructor(board, entity, order, width, depth) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
+        this.continuity = {
+            horizon: new Line(),
+            vertical: new Line()
+        };
         this.evaluation();
         this.order = order;
         this.width = width;
@@ -112,66 +117,87 @@ class Garden {
     }
 
     evaluation() {
-        this.score = 0;
-        let continuity = {
-            horizon: {
-                head: 1,
-                end: 1
-            },
-            vertical: {
-                head: 1,
-                end: 1
-            }
-        };
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 if (this.entity.distance[this.board[i][j]] == 1) {
-                    this.score += 1;
-                    if (continuity.horizon.head) {
-                        this.score += 1;
+                    this.score++;
+                }
+                if (this.continuity.horizon.headFlag) {
+                    if (this.entity.distance[this.board[i][j]] == 1) {
+                        if (this.continuity.horizon.headFlag == 2) {
+                            this.score++;
+                        }
+                    }
+                    else {
+                        this.continuity.horizon.headFlag = 2;
                     }
                 }
-                else if (continuity.horizon.head) {
-                    continuity.horizon.head = 2;
-                }
-                if (continuity.horizon.end) {
+                if (this.continuity.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score += 1;
+                        if (this.continuity.horizon.endFlag == 2) {
+                            this.score++;
+                        }
                     }
                     else {
-                        continuity.horizon.end = 2;
+                        this.continuity.horizon.endFlag = 2;
                     }
                 }
-                if (continuity.vertical.head) {
+                if (this.continuity.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score += 1;
+                        if (this.continuity.vertical.headFlag == 2) {
+                            this.score++;
+                        }
                     }
                     else {
-                        continuity.vertical.head = 2;
+                        this.continuity.vertical.headFlag = 2;
                     }
                 }
-                if (continuity.vertical.end) {
+                if (this.continuity.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score += 1;
+                        if (this.continuity.vertical.endFlag == 2) {
+                            this.score++;
+                        }
                     }
                     else {
-                        continuity.vertical.end = 2;
+                        this.continuity.vertical.endFlag = 2;
                     }
                 }
             }
-            if (continuity.horizon.head == 2) {
-                continuity.horizon.head = 0;
+            switch (this.continuity.horizon.headFlag) {
+                case 1:
+                    this.continuity.horizon.head++;
+                    break;
+                case 2:
+                    this.continuity.horizon.headFlag = false;
+                    break;
             }
-            if (continuity.horizon.end == 2) {
-                continuity.horizon.end = 0;
+            switch (this.continuity.horizon.endFlag) {
+                case 1:
+                    this.continuity.horizon.end++;
+                    break;
+                case 2:
+                    this.continuity.horizon.endFlag = false;
+                    break;
             }
-            if (continuity.vertical.head == 2) {
-                continuity.vertical.head = 0;
+            switch (this.continuity.vertical.headFlag) {
+                case 1:
+                    this.continuity.vertical.head++;
+                    break;
+                case 2:
+                    this.continuity.vertical.headFlag = false;
+                    break;
             }
-            if (continuity.vertical.end == 2) {
-                continuity.vertical.end = 0;
+            switch (this.continuity.vertical.endFlag) {
+                case 1:
+                    this.continuity.vertical.end++;
+                    break;
+                case 2:
+                    this.continuity.vertical.endFlag = false;
+                    break;
             }
         }
+        this.score += (this.continuity.horizon.head + this.continuity.horizon.end + this.continuity.vertical.head + this.continuity.vertical.end) * this.size;
+
     }
 }
 
@@ -215,6 +241,13 @@ class Trunk extends Garden {
             this.branch[i].index.push(i);
         }
     }
+}
+
+class Line {
+    head = 0;
+    end = 0;
+    headFlag = 1;
+    endFlag = 1;
 }
 
 module.exports = Trunk;
