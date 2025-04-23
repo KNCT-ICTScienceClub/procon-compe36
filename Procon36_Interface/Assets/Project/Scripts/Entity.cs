@@ -10,6 +10,7 @@ public class Entity : MonoBehaviour
     private Color defaultColor;
     public Vector2Int Position { get; set; }
     public int Number { get; set; } = 0;
+    public int Size { get; set; }
     public bool IsHovered => Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit) && hit.transform == transform;
     public bool IsSelected { get { return isSelected; } set { isSelected = value; } }
 
@@ -61,12 +62,13 @@ public class Entity : MonoBehaviour
         }
     }
 
-    public Entity Initialize(int number, Vector2Int position)
+    public Entity Initialize(int number, Vector2Int position, int size)
     {
         numberField.text = number.ToString();
         Number = number;
         Position = position;
-        SetColor(Number);
+        Size = size;
+        SetColor(Size);
         defaultColor = meshRenderer.material.color;
         return this;
     }

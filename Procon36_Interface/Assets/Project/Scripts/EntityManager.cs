@@ -195,7 +195,7 @@ public class EntityManager : MonoBehaviour
                 // この数値指定でいい感じ
                 GameObject entity = Instantiate(entityPrefab, new Vector3(-procon.FieldSize / 2f + 0.5f + j, 0.5f, procon.FieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
                 entity.name = $"Entity ({j}, {i})";
-                entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.initialProblem[i, j], new(j, i));
+                entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.initialProblem[i, j], new(j, i), procon.FieldSize);
             }
         }
         if (receptionFlag)
@@ -256,7 +256,7 @@ public class EntityManager : MonoBehaviour
                     // この数値指定でいい感じ
                     GameObject entity = Instantiate(entityPrefab, new Vector3(-procon.FieldSize / 2f + 0.5f + j, 0.5f, procon.FieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
                     entity.name = $"Entity ({j}, {i})";
-                    entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.problem[i, j], new(j, i));
+                    entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.problem[i, j], new(j, i), procon.FieldSize);
                 }
             }
         }

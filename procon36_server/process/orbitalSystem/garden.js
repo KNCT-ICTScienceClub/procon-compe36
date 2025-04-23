@@ -38,11 +38,18 @@ class Garden {
 
     makeBranch(index) {
         let suggest = [];
-        for (let i = 0; i < this.size * this.size; i++) {
-            if (this.entity.distance[i] != 1) {
-                let target = this.entity.matching(i);
-                if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
-                    suggest.push(target);
+        for (let i = this.continuity.horizon.head; i < this.size - this.continuity.horizon.end; i++) {
+            for (let j = this.continuity.vertical.head; j < this.size - this.continuity.vertical.end; j++) {
+                if (3 <= i && 3 == j) {
+                    if (this.size - this.continuity.horizon.head - this.continuity.horizon.end - 3 - i > 0) {
+                        j += this.size - this.continuity.vertical.head - this.continuity.vertical.end - 6 > 0 ? this.size - this.continuity.vertical.head - this.continuity.vertical.end - 6 : 0;
+                    }
+                }
+                if (this.entity.distance[this.board[i][j]] != 1) {
+                    let target=this.entity.matching(this.board[i][j]);
+                    if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
+                        suggest.push(target);
+                    }
                 }
             }
         }
