@@ -1,34 +1,45 @@
 class EntityInfo {
+    size;
     position;
     vector;
     direction;
     distance;
+    continuity;
 
     initialize(board) {
-        let size = board.length;
-        this.position = new Array(size * size);
-        this.vector = new Array(size * size);
-        this.direction = new Array(size * size);
-        this.distance = new Array(size * size);
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
+        this.size = board.length;
+        this.position = new Array(this.size * this.size);
+        this.vector = new Array(this.size * this.size);
+        this.direction = new Array(this.size * this.size);
+        this.distance = new Array(this.size * this.size);
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
                 this.position[board[i][j]] = [j, i];
             }
         }
-        for (let i = 0; i < size; i++) {
-            for (let j = 0; j < size; j++) {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
                 if (board[i][j] % 2 == 0) {
                     this.update(board[i][j]);
                 }
             }
         }
+        this.continuity = {
+            horizon: new Line(),
+            vertical: new Line()
+        };
     }
 
     copyInfo(source) {
+        this.size = source.size;
         this.position = [...source.position];
         this.vector = [...source.vector];
         this.distance = [...source.distance];
         this.direction = [...source.direction];
+        this.continuity = {
+            horizon: new Line(),
+            vertical: new Line()
+        };
     }
 
     update(value) {
@@ -42,7 +53,7 @@ class EntityInfo {
     }
 
     matching(value) {
-        let target = new Target(this.position[value],this.distance[value]);
+        let target = new Target(this.position[value], this.distance[value]);
         switch (this.direction[value]) {
             case 3:
             case 15:
@@ -71,19 +82,98 @@ class EntityInfo {
         return target;
     }
 
-    adjusting(value){
-        let target = new Target(this.position[value],this.distance[value]);
+    adjusting(value) {
+        let aim = [
+            { direction: 2, size: this.size - this.continuity.vertical.end - this.position[value][0] },
+            { direction: 3, size: this.size - this.continuity.horizon.end - this.position[value][1] },
+            { direction: 5, size: this.position[value][0] - this.continuity.vertical.head + 1 },
+            { direction: 7, size: this.position[value][1] - this.continuity.horizon.head + 1 }
+        ];
+        const setTarget = (aim) => {
+            switch (aim.direction) {
+                case 2:
+                    return new Target(this.position[value], aim.size);
+                case 3:
+                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1]], aim.size);
+                case 5:
+                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1] - aim.size + 1], aim.size);
+                case 7:
+                    return new Target([this.position[value][0], this.position[value][1] - aim.size + 1], aim.size);
+            }
+        }
+        let target;
+        switch (this.direction[value]) {
+            case 2:
+                aim[2].size++;
+                aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
+                target = setTarget(aim);
+                switch (aim.direction) {
+                    case 3:
+                        target.position[0]++;
+                        break;
+                    case 5:
+                        target.position[0]++;
+                        break;
+                }
+                break;
+            case 3:
+                aim[3].size++;
+                aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
+                target = setTarget(aim);
+                switch (aim.direction) {
+                    case 5:
+                        target.position[1]++;
+                        break;
+                    case 7:
+                        target.position[1]++;
+                        break;
+                }
+                break;
+            case 5:
+                aim[0].size++;
+                aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
+                target = setTarget(aim);
+                switch (aim.direction) {
+                    case 2:
+                        target.position[0]--;
+                        break;
+                    case 7:
+                        target.position[0]--;
+                        break;
+                }
+                break;
+            case 7:
+                aim[1].size++;
+                aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
+                switch (aim.direction) {
+                    case 2:
+                        target.position[1]--;
+                        break;
+                    case 3:
+                        target.position[1]--;
+                        break;
+                }
+                break;
+        }
+        console.log(aim);
         return target;
     }
 }
 
-class Target{
+class Target {
     position;
     size;
-    constructor(position,size){
-        this.position=[...position];
-        this.size=size;
+    constructor(position, size) {
+        this.position = [...position];
+        this.size = size;
     }
+}
+
+class Line {
+    head = 0;
+    end = 0;
+    headFlag = 1;
+    endFlag = 1;
 }
 
 module.exports = EntityInfo;

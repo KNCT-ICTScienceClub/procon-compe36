@@ -2,11 +2,20 @@
 cd ./procon36_server/process
 */
 
-const Lampyrisma=require("./orbitalSystem/lampyrisma");
+const Lampyrisma = require("./orbitalSystem/lampyrisma");
 
-let lampyrisma=new Lampyrisma(12,8,3);
+let board = [
+    [0, 1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10, 11],
+    [12, 13, 14, 15, 16, 17],
+    [0, 1, 2, 3, 4, 5],
+    [6, 7, 8, 9, 10, 11],
+    [12, 13, 14, 15, 16, 17]
+]
+let lampyrisma = new Lampyrisma(board, 8, 3);
 lampyrisma.makeProblemFile();
-lampyrisma.allLink();
+console.log(lampyrisma.garden.entity.adjusting(20));
+//lampyrisma.allLink();
 lampyrisma.makeAnswerFile();
 lampyrisma.timer.end();
 lampyrisma.timer.show();

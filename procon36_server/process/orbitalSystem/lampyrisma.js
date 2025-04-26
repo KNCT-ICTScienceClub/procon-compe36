@@ -50,12 +50,12 @@ class Lampyrisma extends Procon {
                 goal[0].map(index => {
                     this.garden = this.garden.branch[index];
                     this.turnAdd(this.garden.order.position, this.garden.order.size);
-                    console.log("turn:" + this.turn + ",score:" + this.garden.score);
+                    console.log("turn:" + this.turn + ",score:" + this.garden.score+",左端:"+this.entity.continuity.vertical.head+",右端:"+this.entity.continuity.vertical.end+",上端:"+this.entity.continuity.horizon.head+",下端:"+this.entity.continuity.horizon.end);
                 });
                 break;
             }
             this.turnAdd(this.garden.order.position, this.garden.order.size);
-            console.log("turn:" + this.turn + ",score:" + this.garden.score);
+            console.log("turn:" + this.turn + ",score:" + this.garden.score+",左端:"+this.entity.continuity.vertical.head+",右端:"+this.entity.continuity.vertical.end+",上端:"+this.entity.continuity.horizon.head+",下端:"+this.entity.continuity.horizon.end);
             this.garden.extendBranch(this.depth);
         }
     }

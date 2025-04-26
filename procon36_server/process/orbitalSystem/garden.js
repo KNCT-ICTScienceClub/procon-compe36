@@ -10,17 +10,12 @@ class Garden {
     depth;
     index = [];
     order;
-    continuity;
 
     constructor(board, entity, order, width, depth) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
-        this.continuity = {
-            horizon: new Line(),
-            vertical: new Line()
-        };
         this.evaluation();
         this.order = order;
         this.width = width;
@@ -38,15 +33,15 @@ class Garden {
 
     makeBranch(index) {
         let suggest = [];
-        for (let i = this.continuity.horizon.head; i < this.size - this.continuity.horizon.end; i++) {
-            for (let j = this.continuity.vertical.head; j < this.size - this.continuity.vertical.end; j++) {
+        for (let i = this.entity.continuity.horizon.head; i < this.size - this.entity.continuity.horizon.end; i++) {
+            for (let j = this.entity.continuity.vertical.head; j < this.size - this.entity.continuity.vertical.end; j++) {
                 if (3 <= i && 3 == j) {
-                    if (this.size - this.continuity.horizon.head - this.continuity.horizon.end - 3 - i > 0) {
-                        j += this.size - this.continuity.vertical.head - this.continuity.vertical.end - 6 > 0 ? this.size - this.continuity.vertical.head - this.continuity.vertical.end - 6 : 0;
+                    if (this.size - this.entity.continuity.horizon.head - this.entity.continuity.horizon.end - 3 - i > 0) {
+                        j += this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 6 > 0 ? this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 6 : 0;
                     }
                 }
                 if (this.entity.distance[this.board[i][j]] != 1) {
-                    let target=this.entity.matching(this.board[i][j]);
+                    let target = this.entity.matching(this.board[i][j]);
                     if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
                         suggest.push(target);
                     }
@@ -129,82 +124,81 @@ class Garden {
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     this.score++;
                 }
-                if (this.continuity.horizon.headFlag) {
+                if (this.entity.continuity.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
-                        if (this.continuity.horizon.headFlag == 2) {
+                        if (this.entity.continuity.horizon.headFlag == 2) {
                             this.score++;
                         }
                     }
                     else {
-                        this.continuity.horizon.headFlag = 2;
+                        this.entity.continuity.horizon.headFlag = 2;
                     }
                 }
-                if (this.continuity.horizon.endFlag) {
+                if (this.entity.continuity.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        if (this.continuity.horizon.endFlag == 2) {
+                        if (this.entity.continuity.horizon.endFlag == 2) {
                             this.score++;
                         }
                     }
                     else {
-                        this.continuity.horizon.endFlag = 2;
+                        this.entity.continuity.horizon.endFlag = 2;
                     }
                 }
-                if (this.continuity.vertical.headFlag) {
+                if (this.entity.continuity.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
-                        if (this.continuity.vertical.headFlag == 2) {
+                        if (this.entity.continuity.vertical.headFlag == 2) {
                             this.score++;
                         }
                     }
                     else {
-                        this.continuity.vertical.headFlag = 2;
+                        this.entity.continuity.vertical.headFlag = 2;
                     }
                 }
-                if (this.continuity.vertical.endFlag) {
+                if (this.entity.continuity.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        if (this.continuity.vertical.endFlag == 2) {
+                        if (this.entity.continuity.vertical.endFlag == 2) {
                             this.score++;
                         }
                     }
                     else {
-                        this.continuity.vertical.endFlag = 2;
+                        this.entity.continuity.vertical.endFlag = 2;
                     }
                 }
             }
-            switch (this.continuity.horizon.headFlag) {
+            switch (this.entity.continuity.horizon.headFlag) {
                 case 1:
-                    this.continuity.horizon.head++;
+                    this.entity.continuity.horizon.head++;
                     break;
                 case 2:
-                    this.continuity.horizon.headFlag = false;
+                    this.entity.continuity.horizon.headFlag = false;
                     break;
             }
-            switch (this.continuity.horizon.endFlag) {
+            switch (this.entity.continuity.horizon.endFlag) {
                 case 1:
-                    this.continuity.horizon.end++;
+                    this.entity.continuity.horizon.end++;
                     break;
                 case 2:
-                    this.continuity.horizon.endFlag = false;
+                    this.entity.continuity.horizon.endFlag = false;
                     break;
             }
-            switch (this.continuity.vertical.headFlag) {
+            switch (this.entity.continuity.vertical.headFlag) {
                 case 1:
-                    this.continuity.vertical.head++;
+                    this.entity.continuity.vertical.head++;
                     break;
                 case 2:
-                    this.continuity.vertical.headFlag = false;
+                    this.entity.continuity.vertical.headFlag = false;
                     break;
             }
-            switch (this.continuity.vertical.endFlag) {
+            switch (this.entity.continuity.vertical.endFlag) {
                 case 1:
-                    this.continuity.vertical.end++;
+                    this.entity.continuity.vertical.end++;
                     break;
                 case 2:
-                    this.continuity.vertical.endFlag = false;
+                    this.entity.continuity.vertical.endFlag = false;
                     break;
             }
         }
-        this.score += (this.continuity.horizon.head + this.continuity.horizon.end + this.continuity.vertical.head + this.continuity.vertical.end) * this.size;
-
+        this.score += (this.entity.continuity.horizon.head + this.entity.continuity.horizon.end + this.entity.continuity.vertical.head + this.entity.continuity.vertical.end) * this.size;
     }
 }
 
@@ -248,13 +242,6 @@ class Trunk extends Garden {
             this.branch[i].index.push(i);
         }
     }
-}
-
-class Line {
-    head = 0;
-    end = 0;
-    headFlag = 1;
-    endFlag = 1;
 }
 
 module.exports = Trunk;

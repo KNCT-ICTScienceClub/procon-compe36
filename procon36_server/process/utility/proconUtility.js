@@ -19,7 +19,8 @@ class Procon {
             this.size = element;
         }
         else if ((element[0]?.length ?? 0) >= 2) {
-
+            this.board = element;
+            this.size = this.board.length;
         }
         else {
             throw new TypeError("引数には数値か2次元配列を入力してください.\n問題箇所--->new Procon(element=" + element + "...");
