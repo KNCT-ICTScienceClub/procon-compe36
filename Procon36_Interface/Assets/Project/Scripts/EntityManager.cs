@@ -26,21 +26,9 @@ public class EntityManager : MonoBehaviour
     /// </summary>
     [SerializeField] GameObject originalHorizontalFrame;
     /// <summary>
-    /// コピー元となるエンティティの数値を表すテキストメッシュ
-    /// </summary>
-    [SerializeField] GameObject originalEntityText;
-    /// <summary>
-    /// エンティティの親となるオブジェクト
-    /// </summary>
-    [SerializeField] GameObject entityParent;
-    /// <summary>
     /// フレームの親となるオブジェクト
     /// </summary>
     [SerializeField] GameObject frameParent;
-    /// <summary>
-    /// エンティティの数値を表すテキストメッシュの親となるオブジェクト
-    /// </summary>
-    [SerializeField] GameObject textParent;
     /// <summary>
     /// 選択範囲の枠のオブジェクト
     /// </summary>
@@ -52,7 +40,7 @@ public class EntityManager : MonoBehaviour
     /// <summary>
     /// 現在の状態を表すテキストメッシュ
     /// </summary>
-    [SerializeField] TextMeshProUGUI statusText;
+    [SerializeField] TextMeshProUGUI status;
     /// <summary>
     /// trueにすると外部からjsonを読み込むようになる
     /// </summary>
@@ -121,7 +109,7 @@ public class EntityManager : MonoBehaviour
                 else break;
                 // 現在選択中のエンティティと原点のエンティティを比較して範囲の大きさを算出
                 int areaSize = Math.Max(Math.Abs(origin.Position.x - current.Position.x), Math.Abs(origin.Position.y - current.Position.y)) + 1;
-                // 選択範囲の原点を調整する
+                // 選択範囲の原点を調整する（常に正方形の左上角）
                 Vector2Int slicePosition = origin.Position;
                 // 選択中が原点より左上にある場合
                 if (origin.Position.x > current.Position.x && origin.Position.y > current.Position.y)
@@ -144,14 +132,14 @@ public class EntityManager : MonoBehaviour
                 {
                     slicePosition += Vector2Int.down * slicePosition.y;
                 }
-                else if (slicePosition.y + (areaSize - 1) >= entities.Count)
+                else if (slicePosition.y + areaSize >= entities.Count)
                 {
-
+                    Debug.LogError("選択範囲の下側がフィールドサイズを超えたかも");
                 }
-                if ((slicePosition.y < 0 && slicePosition.y - (areaSize - 1) < 0) || (slicePosition.y >= entities.Count && slicePosition.y + (areaSize - 1) >= entities.Count))
-                {
-                    // slicePosition 
-                }
+                // if ((slicePosition.y < 0 && slicePosition.y - (areaSize - 1) < 0) || (slicePosition.y >= entities.Count && slicePosition.y + (areaSize - 1) >= entities.Count))
+                // {
+                //     slicePosition 
+                // }
                 // Debug.Log(slicePosition);
                 // entitiesをスライスして選択範囲を作成する
                 entities.GetRange(slicePosition.x, areaSize).ForEach(line => line.GetRange(slicePosition.y, areaSize).ForEach(entity => entity.IsSelected = true));
@@ -246,17 +234,12 @@ public class EntityManager : MonoBehaviour
         {
             procon.Engage(new(ops.x, ops.y), ops.n);
             yield return new WaitForSeconds(seconds);
-            entities.ForEach(line => line.ForEach(entities => Destroy(entities.gameObject)));
-            entities.Clear();
-            entities = Enumerable.Repeat<List<Entity>>(new(procon.FieldSize), procon.FieldSize).Select(line => line = new(Enumerable.Repeat<Entity>(null, procon.FieldSize))).ToList();
             for (int i = 0; i < procon.FieldSize; i++)
             {
                 for (int j = 0; j < procon.FieldSize; j++)
                 {
-                    // この数値指定でいい感じ
-                    GameObject entity = Instantiate(entityPrefab, new Vector3(-procon.FieldSize / 2f + 0.5f + j, 0.5f, procon.FieldSize / 2f - 0.5f - i), Quaternion.identity, transform);
-                    entity.name = $"Entity ({j}, {i})";
-                    entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.problem[i, j], new(j, i), procon.FieldSize);
+                    entities[j][i].SetNumber(procon.problem[i, j]);
+                    status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
                 }
             }
         }

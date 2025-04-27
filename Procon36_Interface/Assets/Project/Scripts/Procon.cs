@@ -246,7 +246,7 @@ public class Procon
     /// <summary>
     /// 隣り合った数値が同じである要素の数
     /// </summary>
-    public int PairsCount
+    public int PairCount
     {
         get
         {

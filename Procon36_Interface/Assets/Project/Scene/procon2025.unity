@@ -1978,9 +1978,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'turn:0
+  m_text: 'turn: 0
 
-    match:0
+    pair: 0
 
 '
   m_isRightToLeft: 0
@@ -2116,13 +2116,10 @@ MonoBehaviour:
   entityPrefab: {fileID: 3141449736491810339, guid: 8f5ca9f08871cc444ac128e483dc8399, type: 3}
   originalVerticalFrame: {fileID: 1808672094}
   originalHorizontalFrame: {fileID: 823903972}
-  originalEntityText: {fileID: 1154176379}
-  entityParent: {fileID: 1469473464}
   frameParent: {fileID: 218073051}
-  textParent: {fileID: 262679754}
   selectArea: {fileID: 350558348}
   tableFrame: {fileID: 607415562}
-  statusText: {fileID: 1460118697}
+  status: {fileID: 1460118697}
   receptionFlag: 1
   randomFlag: 0
 --- !u!1 &1547032977

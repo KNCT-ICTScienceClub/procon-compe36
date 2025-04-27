@@ -7,10 +7,11 @@ public class Entity : MonoBehaviour
     [SerializeField] private TextMeshPro numberField;
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private bool isSelected = false;
+    [SerializeField] private int number = 0;
+    [SerializeField] private int fieldSize;
     private Color defaultColor;
     public Vector2Int Position { get; set; }
-    public int Number { get; set; } = 0;
-    public int Size { get; set; }
+    public int Number { get => number; }
     public bool IsHovered => Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit) && hit.transform == transform;
     public bool IsSelected { get { return isSelected; } set { isSelected = value; } }
 
@@ -62,27 +63,35 @@ public class Entity : MonoBehaviour
         }
     }
 
-    public Entity Initialize(int number, Vector2Int position, int size)
+    public Entity Initialize(int number, Vector2Int position, int fieldSize)
     {
-        numberField.text = number.ToString();
-        Number = number;
+        SetNumber(number);
         Position = position;
-        Size = size;
-        SetColor(Size);
+        this.fieldSize = fieldSize;
+        SetColor(this.fieldSize);
         defaultColor = meshRenderer.material.color;
         return this;
     }
 
-    public Entity SetColor(int size)
+    public Entity SetNumber(int number)
+    {
+        this.number = number;
+        numberField.text = number.ToString();
+        SetColor(fieldSize);
+        return this;
+    }
+
+    public Entity SetColor(int fieldSize)
     {
         // 数値によって、同じ色相について 普通の色と、彩度を半分にした色と、明度を半分にした色 の3種類の色を作る
         // 彩度 or 明度 半分がみにくそうならもうちょっと明るくしたりして調整する
-        meshRenderer.material.color = Color.HSVToRGB
+        defaultColor = Color.HSVToRGB
         (
-            H: (float)(Number % Mathf.Ceil(size * size / 6)) / (size * size / 6),
-            S: Number < Mathf.Ceil(size * size / 6) ? 0.5f : 1f,
-            V: Number > Mathf.Ceil(size * size / 6) * 2 ? 0.5f : 1f
+            H: (float)(number % Mathf.Ceil(fieldSize * fieldSize / 6)) / (fieldSize * fieldSize / 6),
+            S: number < Mathf.Ceil(fieldSize * fieldSize / 6) ? 0.65f : 0.95f,
+            V: number > Mathf.Ceil(fieldSize * fieldSize / 6) * 2 ? 0.65f : 0.95f
         );
+        meshRenderer.material.color = defaultColor;
         return this;
     }
 }
