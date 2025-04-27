@@ -1,5 +1,5 @@
 const Procon = require("../utility/proconUtility");
-const Trunk = require("./garden");
+const Garden = require("./garden");
 const EntityInfo = require("./entityInfo");
 
 class Lampyrisma extends Procon {
@@ -27,36 +27,30 @@ class Lampyrisma extends Procon {
         }));
         this.entity = new EntityInfo();
         this.entity.initialize(this.encodedBoard);
-        this.garden = new Trunk(this.encodedBoard, this.entity, 0, this.width, 0);
+        this.garden = new Garden(this.encodedBoard, this.entity, { position: [-1, -1], size: -1 }, this.width);
         this.garden.index = [...Array(depth).fill(0)];
-        this.garden.extendTrunk(depth);
+        this.garden.makeTrunk(depth);
     }
 
     allLink() {
         while (true) {
             let highScoreIndex = [];
-            let goal=[];
+            let goal = [];
             this.garden.pruning(highScoreIndex, this.depth, goal);
-            if (goal.length==0) {
-                highScoreIndex.sort((a, b) => b.score - a.score);
-                let duplicate = [...Array(this.width).fill(0)];
-                let i = 0;
-                while (highScoreIndex[0].score == highScoreIndex[i].score && i < highScoreIndex.length) {
-                    duplicate[highScoreIndex[i++].index]++;
-                }
-                this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
+            highScoreIndex.sort((a, b) => b.score - a.score);
+            let duplicate = [...Array(this.width).fill(0)];
+            let i = 0;
+            //console.log(highScoreIndex);
+            while (highScoreIndex[0].score == highScoreIndex[i]?.score && i < highScoreIndex.length) {
+                duplicate[highScoreIndex[i++].index]++;
             }
-            else {
-                goal[0].map(index => {
-                    this.garden = this.garden.branch[index];
-                    this.turnAdd(this.garden.order.position, this.garden.order.size);
-                    console.log("turn:" + this.turn + ",score:" + this.garden.score+",左端:"+this.entity.continuity.vertical.head+",右端:"+this.entity.continuity.vertical.end+",上端:"+this.entity.continuity.horizon.head+",下端:"+this.entity.continuity.horizon.end);
-                });
+            this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
+            this.turnAdd(this.garden.order.position, this.garden.order.size);
+            console.log("turn:" + this.turn + ",score:" + this.garden.score + ",左端:" + this.garden.entity.continuity.vertical.head + ",右端:" + this.garden.entity.continuity.vertical.end + ",上端:" + this.garden.entity.continuity.horizon.head + ",下端:" + this.garden.entity.continuity.horizon.end);
+            this.garden.extendBranch(this.depth);
+            if(this.turn>300){
                 break;
             }
-            this.turnAdd(this.garden.order.position, this.garden.order.size);
-            console.log("turn:" + this.turn + ",score:" + this.garden.score+",左端:"+this.entity.continuity.vertical.head+",右端:"+this.entity.continuity.vertical.end+",上端:"+this.entity.continuity.horizon.head+",下端:"+this.entity.continuity.horizon.end);
-            this.garden.extendBranch(this.depth);
         }
     }
 }

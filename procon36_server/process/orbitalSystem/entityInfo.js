@@ -145,6 +145,7 @@ class EntityInfo {
             case 7:
                 aim[1].size++;
                 aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
+                target = setTarget(aim);
                 switch (aim.direction) {
                     case 2:
                         target.position[1]--;
@@ -155,7 +156,6 @@ class EntityInfo {
                 }
                 break;
         }
-        console.log(aim);
         return target;
     }
 }

@@ -7,11 +7,10 @@ class Garden {
     branch = [];
     score = 0;
     width;
-    depth;
     index = [];
     order;
 
-    constructor(board, entity, order, width, depth) {
+    constructor(board, entity, order, width) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
@@ -19,7 +18,13 @@ class Garden {
         this.evaluation();
         this.order = order;
         this.width = width;
-        this.depth = depth;
+    }
+
+    makeTrunk(depth) {
+        if (depth != 0) {
+            this.makeBranch(this.index, false);
+            this.branch.map(element => element.makeTrunk(depth - 1));
+        }
     }
 
     extendBranch(depth) {
@@ -31,19 +36,36 @@ class Garden {
         }
     }
 
-    makeBranch(index) {
+    makeBranch(index, adjust = true) {
         let suggest = [];
         for (let i = this.entity.continuity.horizon.head; i < this.size - this.entity.continuity.horizon.end; i++) {
             for (let j = this.entity.continuity.vertical.head; j < this.size - this.entity.continuity.vertical.end; j++) {
-                if (3 <= i && 3 == j) {
-                    if (this.size - this.entity.continuity.horizon.head - this.entity.continuity.horizon.end - 3 - i > 0) {
-                        j += this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 6 > 0 ? this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 6 : 0;
+                /*if (2 <= i && 2 == j) {
+                    if (this.size - this.entity.continuity.horizon.head - this.entity.continuity.horizon.end - 2 - i > 0) {
+                        j += this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 4 > 0 ? this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 4 : 0;
                     }
-                }
+                }*/
                 if (this.entity.distance[this.board[i][j]] != 1) {
                     let target = this.entity.matching(this.board[i][j]);
                     if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
                         suggest.push(target);
+                    }
+                }
+            }
+        }
+        if (adjust) {
+            for (let i = this.entity.continuity.horizon.head + 1; i < this.size - this.entity.continuity.horizon.end - 1; i++) {
+                for (let j = this.entity.continuity.vertical.head + 1; j < this.size - this.entity.continuity.vertical.end - 1; j++) {
+                    if (this.board[i][j] % 2 == 0 && this.entity.distance[this.board[i][j]] == 1) {
+                        let target = this.entity.adjusting(this.board[i][j]);
+                        if (target.size == 2) {
+                            if ([[0, 0], [0, 1], [1, 0], [1, 1]].filter(element => this.entity.distance[this.board[target.position[1] + element[1]][target.position[0] + element[0]]] == 1).length != 4) {
+                                suggest.push(target);
+                            }
+                        }
+                        else {
+                            suggest.push(target);
+                        }
                     }
                 }
             }
@@ -55,11 +77,13 @@ class Garden {
             }
         }
         suggest.map(element => {
-            this.engage(element.position, element.size);
-            this.branch.push(new Garden(this.board, this.entity, element, this.width, this.depth + 1));
-            this.engage(element.position, element.size, true);
+            if (element.position[0] != this.order.position[0] || element.position[1] != this.order.position[1] || element.size != this.order.size) {
+                this.engage(element.position, element.size);
+                this.branch.push(new Garden(this.board, this.entity, element, this.width));
+                this.engage(element.position, element.size, true);
+            }
         });
-        this.branch = this.branch.filter(element => element).toSorted((a, b) => b.score - a.score).slice(0, this.width);
+        this.branch = this.branch.toSorted((a, b) => b.score - a.score).slice(0, this.width);
         for (let i = 0; i < this.branch.length; i++) {
             this.branch[i].index = index.slice(1);
             this.branch[i].index.push(i);
@@ -202,46 +226,4 @@ class Garden {
     }
 }
 
-class Trunk extends Garden {
-    extendTrunk(depth) {
-        if (depth != 0) {
-            this.makeTrunk(this.index);
-            this.branch.map(element => element.extendTrunk(depth - 1));
-        }
-    }
-
-    makeTrunk(index) {
-        let suggest = [];
-        for (let i = 0; i < this.size * this.size; i++) {
-            if (this.entity.distance[i] != 1) {
-                let target = this.entity.matching(i);
-                if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
-                    suggest.push(target);
-                }
-            }
-        }
-        suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
-        for (let i = 0; i < suggest.length - 1; i++) {
-            if (suggest[i].position[0] == suggest[i + 1].position[0] && suggest[i].position[1] == suggest[i + 1].position[1] && suggest[i].size == suggest[i + 1].size) {
-                delete suggest[i];
-            }
-        }
-        suggest.map(element => {
-            this.engage(element.position, element.size);
-            this.branch.push(new Trunk(this.board, this.entity, element, this.width, this.depth + 1));
-            this.engage(element.position, element.size, true);
-        });
-        for (let i = 0; i < this.branch.length; i++) {
-            if (this.branch[i].score <= this.score) {
-                delete this.branch[i];
-            }
-        }
-        this.branch = this.branch.filter(element => element).toSorted((a, b) => b.score - a.score).slice(0, this.width);
-        for (let i = 0; i < this.branch.length; i++) {
-            this.branch[i].index = index.slice(1);
-            this.branch[i].index.push(i);
-        }
-    }
-}
-
-module.exports = Trunk;
+module.exports = Garden;
