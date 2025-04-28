@@ -7,7 +7,7 @@ using TMPro;
 
 public class EntityManager : MonoBehaviour
 {
-    [SerializeField] Procon procon;
+    public Procon procon;
     /// <summary>
     /// 選択範囲
     /// </summary>
@@ -77,7 +77,7 @@ public class EntityManager : MonoBehaviour
         Camera.main.transform.position = new Vector3(0, 0.88f * procon.FieldSize + 1.15f, 0);
         tableFrame.transform.position = new Vector3(0, 0f, 0);
         tableFrame.GetComponent<TableManager>().Resize(procon.FieldSize);
-        // 新しい方、フィールドサイズの数だけのエンティティしか生成しない
+        // フィールドサイズの数だけエンティティを生成し、実際の問題の数値を入れる
         entities = Enumerable.Repeat<List<Entity>>(new(procon.FieldSize), procon.FieldSize).Select(line => line = new(Enumerable.Repeat<Entity>(null, procon.FieldSize))).ToList();
         for (int i = 0; i < procon.FieldSize; i++)
         {
@@ -90,6 +90,19 @@ public class EntityManager : MonoBehaviour
             }
         }
         selection = new(in entities);
+        // 「導き」したときの問題の変更を表示にも反映させるようにする
+        procon.OnEngage += (problem) => 
+        {
+            for (int i = 0; i < entities.Count; i++)
+            {
+                for (int j = 0; j < entities.Count; j++)
+                {
+                    entities[j][i].SetNumber(problem[i, j]);
+                    status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
+                    
+                }
+            }
+        };
         if (receptionFlag)
         {
             StartCoroutine(Replay(0.5f));
@@ -150,7 +163,24 @@ public class EntityManager : MonoBehaviour
     } 
     // Update is called once per frame
     void Update()
-    {        
+    {
+        if (selection.Status == Selection.SelectionStatus.Finish)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                procon.Engage(selection.SlicePosition, selection.AreaSize);
+            }
+            if (Input.GetMouseButtonDown(1))
+            {
+                selection.Select(null, Selection.SelectionStatus.Cancel);
+            }
+        }
+        // Rを押すと1手戻る
+        if (Input.GetKeyDown(KeyCode.R) && (selection.Status != Selection.SelectionStatus.Start || selection.Status != Selection.SelectionStatus.Continue) && procon.Turn != 0)
+        {
+            procon.TurnBack();
+            status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
+        }
         // if (Input.GetMouseButtonDown(0))
         // {
         //     // 範囲選択がされていないときの処理

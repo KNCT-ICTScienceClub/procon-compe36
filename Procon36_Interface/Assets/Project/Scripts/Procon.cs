@@ -12,6 +12,7 @@ public class Procon
     [SerializeField, Range(4, 24)] private int fieldSize;
     [SerializeField] private bool isUseJSON = false;
     [SerializeField] private bool isRandom = true;
+    public event Action<int[,]> OnEngage;
     /// <summary>
     /// 問題の初期状態
     /// </summary>
@@ -181,6 +182,7 @@ public class Procon
         }
         // orderに操作を追加
         orders.Add(new(position, size));
+        OnEngage?.Invoke(problem);
     }
     /// <summary>
     /// 一手操作を戻す関数
@@ -214,6 +216,7 @@ public class Procon
                     problem[(int)position.y + j, (int)position.x + i] = cell[i, j];
                 }
             }
+            OnEngage?.Invoke(problem);
         }
         ReverseEngage(orders[orders.Count - 1].position, orders[orders.Count - 1].size);
         // orderの操作を削除
@@ -228,14 +231,34 @@ public class Procon
         get
         {
             int count = 0;
-            for (int i = 0; i < fieldSize - 1; i++)
+            // 下と右方向の隣同士を比較していく
+            for (int i = 0; i < fieldSize; i++)
             {
-                for (int j = 0; j < fieldSize - 1; j++)
+                for (int j = 0; j < fieldSize ; j++)
                 {
-                    if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
+                    if (i + 1 < fieldSize && j + 1 < fieldSize)
                     {
-                        count++;
+                        if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
+                        {
+                            count++;
+                        }
                     }
+                    // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
+                    else if (i == fieldSize - 1)
+                    {
+                        if (problem[i, j] == problem[i, j + 1])
+                        {
+                            count++;
+                        }
+                    }
+                    else if (j == fieldSize - 1)
+                    {
+                        if (problem[i, j] == problem[i + 1, j])
+                        {
+                            count++;
+                        }
+                    }
+                    
                 }
             }
             return count;

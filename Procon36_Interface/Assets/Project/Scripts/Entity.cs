@@ -26,27 +26,21 @@ public class Entity : MonoBehaviour
     {
         if (IsHovered)
         {
-            // entityManager.area.current = this;[
             if (!IsSelected && Input.GetMouseButtonDown(0))
             {
-                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Start);
+                entityManager.selection.Select(this, Selection.SelectionStatus.Start);
                 isSelected = true;
             }
 
-            if (Input.GetMouseButton(0))
+            if (Input.GetMouseButton(0) && (entityManager.selection.Status == Selection.SelectionStatus.Start || entityManager.selection.Status == Selection.SelectionStatus.Continue))
             {
-                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Continue);
+                entityManager.selection.Select(this, Selection.SelectionStatus.Continue);
                 isSelected = true;
             }
-            else if (Input.GetMouseButtonUp(0))
+            else if (Input.GetMouseButtonUp(0) && entityManager.selection.Status == Selection.SelectionStatus.Continue)
             {
-                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Finish);
+                entityManager.selection.Select(this, Selection.SelectionStatus.Finish);
             }            
-        }
-        if (IsSelected && Input.GetMouseButtonDown(1))
-        {
-            isSelected = false;
-            // Debug.LogWarning($"area selection calcel");
         }
         
         if (IsSelected)

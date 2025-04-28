@@ -24,6 +24,10 @@ public class Selection
     /// 常に選択範囲の正方形の左上になるようにする
     /// </summary>
     [SerializeField] private Vector2Int slicePosition;
+    [SerializeField] private SelectionStatus status;
+    public int AreaSize => areaSize;
+    public Vector2Int SlicePosition => slicePosition;
+    public SelectionStatus Status => status; 
     /// <summary>
     /// フィールド上に存在する全てのエンティティを2次元に格納したリスト
     /// </summary>
@@ -70,10 +74,11 @@ public class Selection
     /// 選択範囲を決める
     /// </summary>
     /// <param name="entity">選択したエンティティ（呼び出し元）</param>
-    /// <param name="selection">選択の状態</param>
-    public void SelectArea(Entity entity, SelectionStatus selection)
+    /// <param name="status">選択の状態</param>
+    public void Select(Entity entity, SelectionStatus status)
     {
-        switch (selection)
+        this.status = status;
+        switch (status)
         {
             case SelectionStatus.None:
                 // 選択されたエンティティが変わった時だけ更新
@@ -88,7 +93,7 @@ public class Selection
                 if (current != entity)
                 {
                     current = entity;
-                    entities.ForEach(line => line.ForEach(entity => entity.IsSelected = false));
+                    Clear();
                 }
                 else break;
                 // 現在選択中のエンティティと原点のエンティティを比較して範囲の大きさを算出
@@ -143,10 +148,17 @@ public class Selection
                 entities.GetRange(slicePosition.x, areaSize).ForEach(line => line.GetRange(slicePosition.y, areaSize).ForEach(entity => entity.IsSelected = true));
                 break;
             case SelectionStatus.Finish:
-                Debug.Log("selection finished");
                 // 原点を再設定
                 origin = entities[slicePosition.x][slicePosition.y];
                 break;
+            case SelectionStatus.Cancel:
+                Clear();
+                break;
         }
     }
+
+    /// <summary>
+    /// 選択範囲をクリアする
+    /// </summary>
+    public void Clear() => entities.ForEach(line => line.ForEach(entity => entity.IsSelected = false));
 }
