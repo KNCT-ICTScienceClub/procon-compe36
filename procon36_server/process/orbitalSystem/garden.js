@@ -16,6 +16,7 @@ class Garden {
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
         this.evaluation();
+        this.entity.score=this.score;
         this.order = order;
         this.width = width;
     }
@@ -52,7 +53,7 @@ class Garden {
 
     makeBranch(index, adjust = true) {
         let suggest = [];
-        this.matchSuggest(suggest);
+        this.matchSuggest(suggest,2);
         if (adjust) {
             this.adjustSuggest(suggest);
         }
@@ -63,7 +64,6 @@ class Garden {
             }
         }
         suggest.map(element => {
-            console.log(element);
             this.engage(element.position, element.size);
             let twig = new Garden(this.board, this.entity, element, this.width);
             if (element.type == 2) {
@@ -155,50 +155,50 @@ class Garden {
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     this.score.match++;
                 }
-                if (this.entity.continuity.horizon.headFlag) {
+                if (this.score.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
                         this.score.horizon.head++;
                     }
                     else {
-                        this.entity.continuity.horizon.headFlag = 2;
+                        this.score.horizon.headFlag = 2;
                     }
                 }
-                if (this.entity.continuity.horizon.endFlag) {
+                if (this.score.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
                         this.score.horizon.end++;
                     }
                     else {
-                        this.entity.continuity.horizon.endFlag = 2;
+                        this.score.horizon.endFlag = 2;
                     }
                 }
-                if (this.entity.continuity.vertical.headFlag) {
+                if (this.score.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
                         this.score.vertical.head++;
                     }
                     else {
-                        this.entity.continuity.vertical.headFlag = 2;
+                        this.score.vertical.headFlag = 2;
                     }
                 }
-                if (this.entity.continuity.vertical.endFlag) {
+                if (this.score.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
                         this.score.vertical.end++;
                     }
                     else {
-                        this.entity.continuity.vertical.endFlag = 2;
+                        this.score.vertical.endFlag = 2;
                     }
                 }
             }
-            if (this.entity.continuity.horizon.headFlag == 2) {
-                this.entity.continuity.horizon.headFlag = false;
+            if (this.score.horizon.headFlag == 2) {
+                this.score.horizon.headFlag = false;
             }
-            if (this.entity.continuity.horizon.endFlag == 2) {
-                this.entity.continuity.horizon.endFlag = false;
+            if (this.score.horizon.endFlag == 2) {
+                this.score.horizon.endFlag = false;
             }
-            if (this.entity.continuity.vertical.headFlag == 2) {
-                this.entity.continuity.vertical.headFlag = false;
+            if (this.score.vertical.headFlag == 2) {
+                this.score.vertical.headFlag = false;
             }
-            if (this.entity.continuity.vertical.endFlag == 2) {
-                this.entity.continuity.vertical.endFlag = false;
+            if (this.score.vertical.endFlag == 2) {
+                this.score.vertical.endFlag = false;
             }
         }
         this.score.horizon.headLine = Math.floor(this.score.horizon.head / this.size);
@@ -214,14 +214,18 @@ class Score {
     horizon = {
         head: 0,
         headLine: 0,
+        headFlag: 1,
         end: 0,
-        endLine: 0
+        endLine: 0,
+        endFlag: 1
     };
     vertical = {
         head: 0,
         headLine: 0,
+        headFlag: 1,
         end: 0,
-        endLine: 0
+        endLine: 0,
+        endFlag: 1
     };
     compound;
 }

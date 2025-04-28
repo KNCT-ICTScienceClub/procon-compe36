@@ -48,9 +48,6 @@ class Lampyrisma extends Procon {
             this.turnAdd(this.garden.order.position, this.garden.order.size);
             console.log("turn:" + this.turn + ",score:" + this.garden.score.match + ",左端:" + this.garden.score.vertical.head + ",右端:" + this.garden.score.vertical.end + ",上端:" + this.garden.score.horizon.head + ",下端:" + this.garden.score.horizon.end);
             this.garden.extendBranch(this.depth);
-            if (this.turn > 300) {
-                break;
-            }
         }
     }
 }
