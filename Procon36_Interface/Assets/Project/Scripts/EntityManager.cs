@@ -1,4 +1,3 @@
-using System;
 using System.Text;
 using System.Linq;
 using System.Collections;
@@ -10,9 +9,9 @@ public class EntityManager : MonoBehaviour
 {
     [SerializeField] Procon procon;
     /// <summary>
-    /// フィールドのサイズ
+    /// 選択範囲
     /// </summary>
-    // [SerializeField, Range(4, 24)] int fieldSize;
+    public Selection selection;
     /// <summary>
     /// エンティティのプレハブ
     /// </summary>
@@ -53,102 +52,6 @@ public class EntityManager : MonoBehaviour
     /// 生成したエンティティを格納する二次元リスト
     /// </summary>
     private List<List<Entity>> entities = new();
-    /// <summary>
-    /// 現在選択されているエンティティ
-    /// </summary>
-    private Entity current;
-    /// <summary>
-    /// 範囲選択の原点となるエンティティ
-    /// </summary>
-    private Entity origin;
-    /// <summary>
-    /// 範囲選択の状態
-    /// </summary>
-    public enum Selection
-    {
-        /// <summary>
-        /// 範囲選択されていないとき
-        /// </summary>
-        None,
-        /// <summary>
-        /// 範囲選択を始めるとき
-        /// </summary>
-        Start,
-        /// <summary>
-        /// 範囲選択中のとき
-        /// </summary>
-        Continue,
-        /// <summary>
-        /// 範囲選択を終えるとき
-        /// </summary>
-        Finish,
-        /// <summary>
-        /// 範囲選択をキャンセルするとき
-        /// </summary>
-        Cancel
-    }
-    public void SelectArea(Entity entity, Selection selection)
-    {
-        switch (selection)
-        {
-            case Selection.None:
-                // 選択されたエンティティが変わった時だけ更新
-                if (current != entity) current = entity;
-                break;
-            case Selection.Start:
-                // 原点に設定
-                origin = entity;
-                break;
-            case Selection.Continue:
-                // 選択されたエンティティが変わった時だけ更新と選択範囲のリセット
-                if (current != entity)
-                {
-                    current = entity;
-                    entities.ForEach(line => line.ForEach(entity => entity.IsSelected = false));
-                }
-                else break;
-                // 現在選択中のエンティティと原点のエンティティを比較して範囲の大きさを算出
-                int areaSize = Math.Max(Math.Abs(origin.Position.x - current.Position.x), Math.Abs(origin.Position.y - current.Position.y)) + 1;
-                // 選択範囲の原点を調整する（常に正方形の左上角）
-                Vector2Int slicePosition = origin.Position;
-                // 選択中が原点より左上にある場合
-                if (origin.Position.x > current.Position.x && origin.Position.y > current.Position.y)
-                {
-                    slicePosition = current.Position;
-                }
-                // 選択中のx座標だけが原点より左にある場合
-                else if (origin.Position.x > current.Position.x)
-                {
-                    slicePosition.x = current.Position.x;
-                    slicePosition.y = current.Position.y - (areaSize - 1);
-                }
-                // 選択中のy座標だけが原点より上にある場合
-                else if (origin.Position.y > current.Position.y)
-                {
-                    slicePosition.x = current.Position.x - (areaSize - 1);
-                    slicePosition.y = current.Position.y;
-                }
-                if (slicePosition.y < 0 && slicePosition.y - (areaSize - 1) < 0)
-                {
-                    slicePosition += Vector2Int.down * slicePosition.y;
-                }
-                else if (slicePosition.y + areaSize >= entities.Count)
-                {
-                    Debug.LogError("選択範囲の下側がフィールドサイズを超えたかも");
-                }
-                // if ((slicePosition.y < 0 && slicePosition.y - (areaSize - 1) < 0) || (slicePosition.y >= entities.Count && slicePosition.y + (areaSize - 1) >= entities.Count))
-                // {
-                //     slicePosition 
-                // }
-                // Debug.Log(slicePosition);
-                // entitiesをスライスして選択範囲を作成する
-                entities.GetRange(slicePosition.x, areaSize).ForEach(line => line.GetRange(slicePosition.y, areaSize).ForEach(entity => entity.IsSelected = true));
-                break;
-            case Selection.Finish:
-                Debug.Log("selection finished");
-                break;
-        }
-    }
     
     void OnValidate()
     {
@@ -186,6 +89,7 @@ public class EntityManager : MonoBehaviour
                 entities[j][i] = entity.GetComponent<Entity>().Initialize(procon.initialProblem[i, j], new(j, i), procon.FieldSize);
             }
         }
+        selection = new(in entities);
         if (receptionFlag)
         {
             StartCoroutine(Replay(0.5f));

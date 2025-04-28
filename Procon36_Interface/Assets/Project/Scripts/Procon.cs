@@ -12,29 +12,6 @@ public class Procon
     [SerializeField, Range(4, 24)] private int fieldSize;
     [SerializeField] private bool isUseJSON = false;
     [SerializeField] private bool isRandom = true;
-    [SerializeField] private List<(Vector2, Vector2)> pairPositions = new();
-    public List<(Vector2, Vector2)> PairPositions
-    {
-        get
-        {
-            (Vector2, Vector2) pair;
-            for (int i = 0; i < fieldSize - 1; i++)
-            {
-                for (int j = 0; j < fieldSize - 1; j++)
-                {
-                    if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
-                    {
-                        pair = (new Vector2(i, j), new Vector2(i + 1, j + 1));
-                        if (!pairPositions.Contains(pair))
-                        {
-                            pairPositions.Add(pair);
-                        }
-                    }
-                }
-            }
-            return pairPositions;
-        }
-    }
     /// <summary>
     /// 問題の初期状態
     /// </summary>

@@ -2120,8 +2120,8 @@ MonoBehaviour:
   selectArea: {fileID: 350558348}
   tableFrame: {fileID: 607415562}
   status: {fileID: 1460118697}
-  receptionFlag: 1
-  randomFlag: 0
+  receptionFlag: 0
+  randomFlag: 1
 --- !u!1 &1547032977
 GameObject:
   m_ObjectHideFlags: 0
