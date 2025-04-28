@@ -27,7 +27,7 @@ class Lampyrisma extends Procon {
         }));
         this.entity = new EntityInfo();
         this.entity.initialize(this.encodedBoard);
-        this.garden = new Garden(this.encodedBoard, this.entity, { position: [-1, -1], size: -1 }, this.width);
+        this.garden = new Garden(this.encodedBoard, this.entity, 0, this.width);
         this.garden.index = [...Array(depth).fill(0)];
         this.garden.makeTrunk(depth);
     }
@@ -46,9 +46,9 @@ class Lampyrisma extends Procon {
             }
             this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
             this.turnAdd(this.garden.order.position, this.garden.order.size);
-            console.log("turn:" + this.turn + ",score:" + this.garden.score + ",左端:" + this.garden.entity.continuity.vertical.head + ",右端:" + this.garden.entity.continuity.vertical.end + ",上端:" + this.garden.entity.continuity.horizon.head + ",下端:" + this.garden.entity.continuity.horizon.end);
+            console.log("turn:" + this.turn + ",score:" + this.garden.score.match + ",左端:" + this.garden.score.vertical.head + ",右端:" + this.garden.score.vertical.end + ",上端:" + this.garden.score.horizon.head + ",下端:" + this.garden.score.horizon.end);
             this.garden.extendBranch(this.depth);
-            if(this.turn>300){
+            if (this.turn > 300) {
                 break;
             }
         }
