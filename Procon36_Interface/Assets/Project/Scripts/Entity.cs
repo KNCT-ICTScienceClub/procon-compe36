@@ -29,18 +29,18 @@ public class Entity : MonoBehaviour
             // entityManager.area.current = this;[
             if (!IsSelected && Input.GetMouseButtonDown(0))
             {
-                entityManager.SelectArea(this, EntityManager.Selection.Start);
+                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Start);
                 isSelected = true;
             }
 
             if (Input.GetMouseButton(0))
             {
-                entityManager.SelectArea(this, EntityManager.Selection.Continue);
+                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Continue);
                 isSelected = true;
             }
             else if (Input.GetMouseButtonUp(0))
             {
-                entityManager.SelectArea(this, EntityManager.Selection.Finish);
+                entityManager.selection.SelectArea(this, Selection.SelectionStatus.Finish);
             }            
         }
         if (IsSelected && Input.GetMouseButtonDown(1))
