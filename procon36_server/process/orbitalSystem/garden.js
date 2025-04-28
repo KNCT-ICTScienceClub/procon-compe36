@@ -5,7 +5,7 @@ class Garden {
     size;
     entity;
     branch = [];
-    score = 0;
+    score = new Score();
     width;
     index = [];
     order;
@@ -18,6 +18,20 @@ class Garden {
         this.evaluation();
         this.order = order;
         this.width = width;
+    }
+
+    pruning(array, depth, goal) {
+        if (depth == 1) {
+            if (this.branch[0]?.score.compound == this.size * this.size * 5) {
+                goal.push(this.branch[0].index);
+            }
+            else {
+                array.push({ index: this.branch[0]?.index[0], score: this.branch[0]?.score.compound });
+            }
+        }
+        else {
+            this.branch.map(element => element.pruning(array, depth - 1, goal));
+        }
     }
 
     makeTrunk(depth) {
@@ -38,37 +52,9 @@ class Garden {
 
     makeBranch(index, adjust = true) {
         let suggest = [];
-        for (let i = this.entity.continuity.horizon.head; i < this.size - this.entity.continuity.horizon.end; i++) {
-            for (let j = this.entity.continuity.vertical.head; j < this.size - this.entity.continuity.vertical.end; j++) {
-                /*if (2 <= i && 2 == j) {
-                    if (this.size - this.entity.continuity.horizon.head - this.entity.continuity.horizon.end - 2 - i > 0) {
-                        j += this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 4 > 0 ? this.size - this.entity.continuity.vertical.head - this.entity.continuity.vertical.end - 4 : 0;
-                    }
-                }*/
-                if (this.entity.distance[this.board[i][j]] != 1) {
-                    let target = this.entity.matching(this.board[i][j]);
-                    if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
-                        suggest.push(target);
-                    }
-                }
-            }
-        }
+        this.matchSuggest(suggest);
         if (adjust) {
-            for (let i = this.entity.continuity.horizon.head + 1; i < this.size - this.entity.continuity.horizon.end - 1; i++) {
-                for (let j = this.entity.continuity.vertical.head + 1; j < this.size - this.entity.continuity.vertical.end - 1; j++) {
-                    if (this.board[i][j] % 2 == 0 && this.entity.distance[this.board[i][j]] == 1) {
-                        let target = this.entity.adjusting(this.board[i][j]);
-                        if (target.size == 2) {
-                            if ([[0, 0], [0, 1], [1, 0], [1, 1]].filter(element => this.entity.distance[this.board[target.position[1] + element[1]][target.position[0] + element[0]]] == 1).length != 4) {
-                                suggest.push(target);
-                            }
-                        }
-                        else {
-                            suggest.push(target);
-                        }
-                    }
-                }
-            }
+            this.adjustSuggest(suggest);
         }
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
@@ -77,30 +63,51 @@ class Garden {
             }
         }
         suggest.map(element => {
-            if (element.position[0] != this.order.position[0] || element.position[1] != this.order.position[1] || element.size != this.order.size) {
-                this.engage(element.position, element.size);
-                this.branch.push(new Garden(this.board, this.entity, element, this.width));
-                this.engage(element.position, element.size, true);
+            console.log(element);
+            this.engage(element.position, element.size);
+            let twig = new Garden(this.board, this.entity, element, this.width);
+            if (element.type == 2) {
+                if (twig.score.compound > this.score.compound) {
+                    this.branch.push(twig);
+                }
             }
+            else {
+                this.branch.push(twig);
+            }
+            this.engage(element.position, element.size, true);
         });
-        this.branch = this.branch.toSorted((a, b) => b.score - a.score).slice(0, this.width);
+        this.branch = this.branch.toSorted((a, b) => b.score.compound - a.score.compound).slice(0, this.width);
         for (let i = 0; i < this.branch.length; i++) {
             this.branch[i].index = index.slice(1);
             this.branch[i].index.push(i);
         }
     }
 
-    pruning(array, depth, goal) {
-        if (depth == 1) {
-            if (this.branch[0]?.score == this.size * this.size * 5) {
-                goal.push(this.branch[0].index);
-            }
-            else {
-                array.push({ index: this.branch[0]?.index[0], score: this.branch[0]?.score });
+    matchSuggest(suggest,limit = this.size) {
+        for (let i = this.score.horizon.headLine; i < this.size - this.score.horizon.endLine; i++) {
+            for (let j = this.score.vertical.headLine; j < this.size - this.score.vertical.endLine; j++) {
+                if (limit <= i && limit == j) {
+                    if (this.size - this.score.horizon.headLine - this.score.horizon.endLine - limit - i > 0) {
+                        j += this.size - this.score.vertical.headLine -this.score.vertical.endLine - limit * 2 > 0 ? this.size - this.score.vertical.headLine -this.score.vertical.endLine - limit * 2 : 0;
+                    }
+                }
+                if (this.entity.distance[this.board[i][j]] != 1) {
+                    let target = this.entity.matching(this.board[i][j]);
+                    if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
+                        suggest.push(target);
+                    }
+                }
             }
         }
-        else {
-            this.branch.map(element => element.pruning(array, depth - 1, goal));
+    }
+
+    adjustSuggest(suggest) {
+        for (let i = this.score.horizon.headLine + 1; i < this.size - this.score.horizon.endLine - 1; i++) {
+            for (let j = this.score.vertical.headLine + 1; j < this.size - this.score.vertical.endLine - 1; j++) {
+                if (this.entity.distance[this.board[i][j]] == 1) {
+                    suggest.push(this.entity.adjusting(this.board[i][j]));
+                }
+            }
         }
     }
 
@@ -146,13 +153,11 @@ class Garden {
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 if (this.entity.distance[this.board[i][j]] == 1) {
-                    this.score++;
+                    this.score.match++;
                 }
                 if (this.entity.continuity.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
-                        if (this.entity.continuity.horizon.headFlag == 2) {
-                            this.score++;
-                        }
+                        this.score.horizon.head++;
                     }
                     else {
                         this.entity.continuity.horizon.headFlag = 2;
@@ -160,9 +165,7 @@ class Garden {
                 }
                 if (this.entity.continuity.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        if (this.entity.continuity.horizon.endFlag == 2) {
-                            this.score++;
-                        }
+                        this.score.horizon.end++;
                     }
                     else {
                         this.entity.continuity.horizon.endFlag = 2;
@@ -170,9 +173,7 @@ class Garden {
                 }
                 if (this.entity.continuity.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
-                        if (this.entity.continuity.vertical.headFlag == 2) {
-                            this.score++;
-                        }
+                        this.score.vertical.head++;
                     }
                     else {
                         this.entity.continuity.vertical.headFlag = 2;
@@ -180,50 +181,49 @@ class Garden {
                 }
                 if (this.entity.continuity.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        if (this.entity.continuity.vertical.endFlag == 2) {
-                            this.score++;
-                        }
+                        this.score.vertical.end++;
                     }
                     else {
                         this.entity.continuity.vertical.endFlag = 2;
                     }
                 }
             }
-            switch (this.entity.continuity.horizon.headFlag) {
-                case 1:
-                    this.entity.continuity.horizon.head++;
-                    break;
-                case 2:
-                    this.entity.continuity.horizon.headFlag = false;
-                    break;
+            if (this.entity.continuity.horizon.headFlag == 2) {
+                this.entity.continuity.horizon.headFlag = false;
             }
-            switch (this.entity.continuity.horizon.endFlag) {
-                case 1:
-                    this.entity.continuity.horizon.end++;
-                    break;
-                case 2:
-                    this.entity.continuity.horizon.endFlag = false;
-                    break;
+            if (this.entity.continuity.horizon.endFlag == 2) {
+                this.entity.continuity.horizon.endFlag = false;
             }
-            switch (this.entity.continuity.vertical.headFlag) {
-                case 1:
-                    this.entity.continuity.vertical.head++;
-                    break;
-                case 2:
-                    this.entity.continuity.vertical.headFlag = false;
-                    break;
+            if (this.entity.continuity.vertical.headFlag == 2) {
+                this.entity.continuity.vertical.headFlag = false;
             }
-            switch (this.entity.continuity.vertical.endFlag) {
-                case 1:
-                    this.entity.continuity.vertical.end++;
-                    break;
-                case 2:
-                    this.entity.continuity.vertical.endFlag = false;
-                    break;
+            if (this.entity.continuity.vertical.endFlag == 2) {
+                this.entity.continuity.vertical.endFlag = false;
             }
         }
-        this.score += (this.entity.continuity.horizon.head + this.entity.continuity.horizon.end + this.entity.continuity.vertical.head + this.entity.continuity.vertical.end) * this.size;
+        this.score.horizon.headLine = Math.floor(this.score.horizon.head / this.size);
+        this.score.horizon.endLine = Math.floor(this.score.horizon.end / this.size);
+        this.score.vertical.headLine = Math.floor(this.score.vertical.head / this.size);
+        this.score.vertical.endLine = Math.floor(this.score.vertical.end / this.size);
+        this.score.compound = this.score.match + this.score.horizon.head + this.score.horizon.end + this.score.vertical.head + this.score.vertical.end;
     }
+}
+
+class Score {
+    match = 0;
+    horizon = {
+        head: 0,
+        headLine: 0,
+        end: 0,
+        endLine: 0
+    };
+    vertical = {
+        head: 0,
+        headLine: 0,
+        end: 0,
+        endLine: 0
+    };
+    compound;
 }
 
 module.exports = Garden;

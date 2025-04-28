@@ -4,7 +4,7 @@ class EntityInfo {
     vector;
     direction;
     distance;
-    continuity;
+    continuity = new Continuity();
 
     initialize(board) {
         this.size = board.length;
@@ -24,10 +24,6 @@ class EntityInfo {
                 }
             }
         }
-        this.continuity = {
-            horizon: new Line(),
-            vertical: new Line()
-        };
     }
 
     copyInfo(source) {
@@ -36,10 +32,6 @@ class EntityInfo {
         this.vector = [...source.vector];
         this.distance = [...source.distance];
         this.direction = [...source.direction];
-        this.continuity = {
-            horizon: new Line(),
-            vertical: new Line()
-        };
     }
 
     update(value) {
@@ -53,7 +45,7 @@ class EntityInfo {
     }
 
     matching(value) {
-        let target = new Target(this.position[value], this.distance[value]);
+        let target = new Target(this.position[value], this.distance[value], 1);
         switch (this.direction[value]) {
             case 3:
             case 15:
@@ -92,13 +84,13 @@ class EntityInfo {
         const setTarget = (aim) => {
             switch (aim.direction) {
                 case 2:
-                    return new Target(this.position[value], aim.size);
+                    return new Target(this.position[value], aim.size, 2);
                 case 3:
-                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1]], aim.size);
+                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1]], aim.size, 2);
                 case 5:
-                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1] - aim.size + 1], aim.size);
+                    return new Target([this.position[value][0] - aim.size + 1, this.position[value][1] - aim.size + 1], aim.size, 2);
                 case 7:
-                    return new Target([this.position[value][0], this.position[value][1] - aim.size + 1], aim.size);
+                    return new Target([this.position[value][0], this.position[value][1] - aim.size + 1], aim.size, 2);
             }
         }
         let target;
@@ -163,17 +155,23 @@ class EntityInfo {
 class Target {
     position;
     size;
-    constructor(position, size) {
+    type;
+    constructor(position, size, type) {
         this.position = [...position];
         this.size = size;
+        this.type = type;
     }
 }
 
-class Line {
-    head = 0;
-    end = 0;
-    headFlag = 1;
-    endFlag = 1;
+class Continuity {
+    horizon = {
+        headFlag: 0,
+        endFlag: 0
+    };
+    vertical = {
+        headFlag: 0,
+        endFlag: 0
+    };
 }
 
 module.exports = EntityInfo;
