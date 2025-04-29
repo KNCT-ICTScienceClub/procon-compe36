@@ -4,7 +4,7 @@ class EntityInfo {
     vector;
     direction;
     distance;
-    continuity = new Continuity();
+    score;
 
     initialize(board) {
         this.size = board.length;
@@ -24,6 +24,7 @@ class EntityInfo {
                 }
             }
         }
+
     }
 
     copyInfo(source) {
@@ -76,10 +77,10 @@ class EntityInfo {
 
     adjusting(value) {
         let aim = [
-            { direction: 2, size: this.size - this.continuity.vertical.end - this.position[value][0] },
-            { direction: 3, size: this.size - this.continuity.horizon.end - this.position[value][1] },
-            { direction: 5, size: this.position[value][0] - this.continuity.vertical.head + 1 },
-            { direction: 7, size: this.position[value][1] - this.continuity.horizon.head + 1 }
+            { direction: 2, size: this.size - this.score.vertical.endLine - this.position[value][0] },
+            { direction: 3, size: this.size - this.score.horizon.endLine - this.position[value][1] },
+            { direction: 5, size: this.position[value][0] - this.score.vertical.headLine + 1 },
+            { direction: 7, size: this.position[value][1] - this.score.horizon.headLine + 1 }
         ];
         const setTarget = (aim) => {
             switch (aim.direction) {
