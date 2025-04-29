@@ -2113,6 +2113,12 @@ MonoBehaviour:
     fieldSize: 10
     isUseJSON: 0
     isRandom: 1
+  selection:
+    current: {fileID: 0}
+    origin: {fileID: 0}
+    areaSize: 0
+    slicePosition: {x: 0, y: 0}
+    status: 0
   entityPrefab: {fileID: 3141449736491810339, guid: 8f5ca9f08871cc444ac128e483dc8399, type: 3}
   originalVerticalFrame: {fileID: 1808672094}
   originalHorizontalFrame: {fileID: 823903972}

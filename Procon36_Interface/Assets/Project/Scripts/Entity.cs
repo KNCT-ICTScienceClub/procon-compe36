@@ -7,13 +7,15 @@ public class Entity : MonoBehaviour
     [SerializeField] private TextMeshPro numberField;
     [SerializeField] private MeshRenderer meshRenderer;
     [SerializeField] private bool isSelected = false;
+    [SerializeField] private bool isPair = false;
     [SerializeField] private int number = 0;
     [SerializeField] private int fieldSize;
     private Color defaultColor;
     public Vector2Int Position { get; set; }
     public int Number { get => number; }
     public bool IsHovered => Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hit) && hit.transform == transform;
-    public bool IsSelected { get { return isSelected; } set { isSelected = value; } }
+    public bool IsSelected { get => isSelected; set => isSelected = value; }
+    public bool IsPair { get => isPair; set => isPair = value; }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
@@ -43,7 +45,11 @@ public class Entity : MonoBehaviour
             }            
         }
         
-        if (IsSelected)
+        if (IsPair)
+        {
+            meshRenderer.material.color = Color.blue;
+        }
+        else if (IsSelected)
         {
             meshRenderer.material.color = Color.magenta;
         }
@@ -63,7 +69,7 @@ public class Entity : MonoBehaviour
         Position = position;
         this.fieldSize = fieldSize;
         SetColor(this.fieldSize);
-        defaultColor = meshRenderer.material.color;
+        // defaultColor = meshRenderer.material.color;
         return this;
     }
 

@@ -103,6 +103,11 @@ public class EntityManager : MonoBehaviour
                 }
             }
         };
+        procon.OnEngage += (problem) =>
+        {
+            entities.ForEach(line => line.ForEach(entity => entity.IsPair = false));
+            procon.pairPositions.ForEach(pos => entities[pos.x][pos.y].IsPair = true);
+        };
         if (receptionFlag)
         {
             StartCoroutine(Replay(0.5f));
@@ -179,7 +184,6 @@ public class EntityManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.R) && (selection.Status != Selection.SelectionStatus.Start || selection.Status != Selection.SelectionStatus.Continue) && procon.Turn != 0)
         {
             procon.TurnBack();
-            status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
         }
         // if (Input.GetMouseButtonDown(0))
         // {

@@ -12,6 +12,10 @@ public class Procon
     [SerializeField, Range(4, 24)] private int fieldSize;
     [SerializeField] private bool isUseJSON = false;
     [SerializeField] private bool isRandom = true;
+    public List<Vector2Int> pairPositions = new();
+    /// <summary>
+    /// <see cref="Engage"/> 実行時に発火するイベントを登録する
+    /// </summary>
     public event Action<int[,]> OnEngage;
     /// <summary>
     /// 問題の初期状態
@@ -24,13 +28,18 @@ public class Procon
     /// </summary>
     public int[,] problem = new int[24, 24];
     /// <summary>
-    /// 問題フィールドのサイズ
-    /// </summary>
-    public int FieldSize => fieldSize;
-    /// <summary>
     /// 操作手順を表す
     /// </summary>
     List<Order> orders = new();
+    /// <summary>
+    /// 問題フィールドのサイズ
+    /// </summary>
+    public int FieldSize => fieldSize;
+    public int PairCount => pairPositions.Count / 2;
+    /// <summary>
+    /// 現在のターン数を調べる
+    /// </summary>
+    public int Turn => orders.Count;
     /// <summary>
     /// 操作を記録するためのクラス
     /// </summary>
@@ -89,8 +98,9 @@ public class Procon
         }
         this.fieldSize = size;
         MakeProblem(randomFlag);
+        OnEngage += (problem) => CountPairs();
     }
-    
+
     /// <summary>
     /// 問題を初期化する関数
     /// 使用しない場所の数値はとりあえず999にしとく
@@ -222,52 +232,92 @@ public class Procon
         // orderの操作を削除
         orders.RemoveAt(orders.Count - 1);
     }
-    
+
+    private void CountPairs()
+    {
+        pairPositions.Clear();
+        // 下と右方向の隣同士を比較していく
+        for (int i = 0; i < fieldSize; i++)
+        {
+            for (int j = 0; j < fieldSize; j++)
+            {
+                if (i + 1 < fieldSize && j + 1 < fieldSize)
+                {
+                    if (problem[i, j] == problem[i + 1, j])
+                    {
+                        // 実際の画面表示に合うようにxy座標を反対にする
+                        pairPositions.Add(new(j, i));
+                        pairPositions.Add(new(j, i + 1));
+                    }
+                    if (problem[i, j] == problem[i, j + 1])
+                    {
+                        pairPositions.Add(new(j, i));
+                        pairPositions.Add(new(j + 1, i));
+                    }
+                }
+                // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
+                else if (i == fieldSize - 1)
+                {
+                    if (problem[i, j] == problem[i, j + 1])
+                    {
+                        pairPositions.Add(new(j, i));
+                        pairPositions.Add(new(j + 1, i));
+                    }
+                }
+                else if (j == fieldSize - 1)
+                {
+                    if (problem[i, j] == problem[i + 1, j])
+                    {
+                        pairPositions.Add(new(j, i));
+                        pairPositions.Add(new(j, i + 1));
+                    }
+                }
+
+            }
+        }
+    }
+
     /// <summary>
     /// 隣り合った数値が同じである要素の数
     /// </summary>
-    public int PairCount
-    {
-        get
-        {
-            int count = 0;
-            // 下と右方向の隣同士を比較していく
-            for (int i = 0; i < fieldSize; i++)
-            {
-                for (int j = 0; j < fieldSize ; j++)
-                {
-                    if (i + 1 < fieldSize && j + 1 < fieldSize)
-                    {
-                        if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
-                        {
-                            count++;
-                        }
-                    }
-                    // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
-                    else if (i == fieldSize - 1)
-                    {
-                        if (problem[i, j] == problem[i, j + 1])
-                        {
-                            count++;
-                        }
-                    }
-                    else if (j == fieldSize - 1)
-                    {
-                        if (problem[i, j] == problem[i + 1, j])
-                        {
-                            count++;
-                        }
-                    }
-                    
-                }
-            }
-            return count;
-        }
-    }
-    /// <summary>
-    /// 現在のターン数を調べる
-    /// </summary>
-    public int Turn => orders.Count;
+    // public int PairCount
+    // {
+    //     get
+    //     {
+    //         int count = 0;
+    //         // 下と右方向の隣同士を比較していく
+    //         for (int i = 0; i < fieldSize; i++)
+    //         {
+    //             for (int j = 0; j < fieldSize; j++)
+    //             {
+    //                 if (i + 1 < fieldSize && j + 1 < fieldSize)
+    //                 {
+    //                     if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
+    //                     {
+    //                         count++;
+    //                     }
+    //                 }
+    //                 // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
+    //                 else if (i == fieldSize - 1)
+    //                 {
+    //                     if (problem[i, j] == problem[i, j + 1])
+    //                     {
+    //                         count++;
+    //                     }
+    //                 }
+    //                 else if (j == fieldSize - 1)
+    //                 {
+    //                     if (problem[i, j] == problem[i + 1, j])
+    //                     {
+    //                         count++;
+    //                     }
+    //                 }
+
+    //             }
+    //         }
+    //         return count;
+    //     }
+    // }
 
     /// <summary>
     /// 問題jsonのクラスの形式
