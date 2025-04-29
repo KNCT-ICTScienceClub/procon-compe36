@@ -16,14 +16,14 @@ class Garden {
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
         this.evaluation();
-        this.entity.score=this.score;
+        this.entity.score = this.score;
         this.order = order;
         this.width = width;
     }
 
     pruning(array, depth, goal) {
         if (depth == 1) {
-            if (this.branch[0]?.score.compound == this.size * this.size * 5) {
+            if (this.branch[0]?.score.match == this.size * this.size) {
                 goal.push(this.branch[0].index);
             }
             else {
@@ -53,7 +53,7 @@ class Garden {
 
     makeBranch(index, adjust = true) {
         let suggest = [];
-        this.matchSuggest(suggest,2);
+        this.matchSuggest(suggest);
         if (adjust) {
             this.adjustSuggest(suggest);
         }
@@ -83,12 +83,12 @@ class Garden {
         }
     }
 
-    matchSuggest(suggest,limit = this.size) {
+    matchSuggest(suggest, limit = this.size) {
         for (let i = this.score.horizon.headLine; i < this.size - this.score.horizon.endLine; i++) {
             for (let j = this.score.vertical.headLine; j < this.size - this.score.vertical.endLine; j++) {
                 if (limit <= i && limit == j) {
                     if (this.size - this.score.horizon.headLine - this.score.horizon.endLine - limit - i > 0) {
-                        j += this.size - this.score.vertical.headLine -this.score.vertical.endLine - limit * 2 > 0 ? this.size - this.score.vertical.headLine -this.score.vertical.endLine - limit * 2 : 0;
+                        j += this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 > 0 ? this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 : 0;
                     }
                 }
                 if (this.entity.distance[this.board[i][j]] != 1) {
@@ -211,23 +211,19 @@ class Garden {
 
 class Score {
     match = 0;
-    horizon = {
-        head: 0,
-        headLine: 0,
-        headFlag: 1,
-        end: 0,
-        endLine: 0,
-        endFlag: 1
-    };
-    vertical = {
-        head: 0,
-        headLine: 0,
-        headFlag: 1,
-        end: 0,
-        endLine: 0,
-        endFlag: 1
-    };
     compound;
+    horizon = new Line();
+    vertical = new Line();
+    compound;
+}
+
+class Line {
+    head = 0;
+    headLine = 0;
+    headFlag = 1;
+    end = 0;
+    endLine = 0;
+    endFlag = 1;
 }
 
 module.exports = Garden;

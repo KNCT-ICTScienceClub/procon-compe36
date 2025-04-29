@@ -12,7 +12,7 @@ let board = [
     [6, 7, 8, 9, 10, 11],
     [12, 13, 14, 15, 16, 17]
 ]*/
-let lampyrisma = new Lampyrisma(24, 5, 4);
+let lampyrisma = new Lampyrisma(16, 7, 3);
 lampyrisma.makeProblemFile();
 lampyrisma.allLink();
 lampyrisma.makeAnswerFile();

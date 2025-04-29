@@ -37,17 +37,30 @@ class Lampyrisma extends Procon {
             let highScoreIndex = [];
             let goal = [];
             this.garden.pruning(highScoreIndex, this.depth, goal);
-            highScoreIndex.sort((a, b) => b.score - a.score);
-            let duplicate = [...Array(this.width).fill(0)];
-            let i = 0;
-            //console.log(highScoreIndex);
-            while (highScoreIndex[0].score == highScoreIndex[i]?.score && i < highScoreIndex.length) {
-                duplicate[highScoreIndex[i++].index]++;
+            if (goal.length == 0) {
+                highScoreIndex.sort((a, b) => b.score - a.score);
+                let duplicate = [...Array(this.width).fill(0)];
+                let i = 0;
+                //console.log(highScoreIndex);
+                for (let i = 0; highScoreIndex[0].score == highScoreIndex[i].score && i < highScoreIndex.length - 1; i++) {
+                    duplicate[highScoreIndex[i].index]++;
+                }
+                this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
             }
-            this.garden = this.garden.branch[duplicate.indexOf(Math.max(...duplicate))];
+            else {
+                goal[0].map(index => {
+                    this.garden = this.garden.branch[index];
+                    this.turnAdd(this.garden.order.position, this.garden.order.size);
+                    console.log("turn:" + this.turn + ",score:" + this.garden.score.match + ",左端:" + this.garden.score.vertical.head + ",右端:" + this.garden.score.vertical.end + ",上端:" + this.garden.score.horizon.head + ",下端:" + this.garden.score.horizon.end);
+                });
+                break;
+            }
             this.turnAdd(this.garden.order.position, this.garden.order.size);
             console.log("turn:" + this.turn + ",score:" + this.garden.score.match + ",左端:" + this.garden.score.vertical.head + ",右端:" + this.garden.score.vertical.end + ",上端:" + this.garden.score.horizon.head + ",下端:" + this.garden.score.horizon.end);
             this.garden.extendBranch(this.depth);
+            if (this.turn > 500) {
+                break;
+            }
         }
     }
 }
