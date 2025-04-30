@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,9 +8,17 @@ using UnityEngine;
 [Serializable]
 public class Procon
 {
+    /// <summary>
+    /// 盤面のサイズ (4~24)
+    /// </summary>
     [SerializeField, Range(4, 24)] private int fieldSize;
-    [SerializeField] private bool isUseJSON = false;
-    [SerializeField] private bool isRandom = true;
+    /// <summary>
+    /// ペアができている全てのエンティティの座標
+    /// </summary>
+    /// <remarks>
+    /// <b>ペアの数は</b> <see cref="PairCount"/> <b>を使用すること！</b><br/>
+    /// このリストの <c>Count</c> プロパティを参照してはいけない
+    /// </remarks>
     public List<Vector2Int> pairPositions = new();
     /// <summary>
     /// <see cref="Engage"/> 実行時に発火するイベントを登録する
@@ -21,7 +28,7 @@ public class Procon
     /// 問題の初期状態
     /// </summary>
     // 実装はしていないがこの配列を使えば最初の状態に戻ることができる
-    // 必要なさそうな気がするから消しても良いが、Initialization関数の中身をうまいことしないいけないかも => リセット機能つくります
+    // 必要なさそうな気がするから消しても良いが、Initialization関数の中身をうまいことしないいけないかも
     public int[,] initialProblem;
     /// <summary>
     /// 現在の問題の状態を表す
@@ -30,21 +37,42 @@ public class Procon
     /// <summary>
     /// 操作手順を表す
     /// </summary>
-    List<Order> orders = new();
+    public List<Order> orders = new();
+    /// <summary>
+    /// <see cref="orders"/> に操作履歴を記録するか
+    /// </summary>
+    /// <remarks>
+    /// 回答のリプレイをするときは使用しない (<c>false</c>にする) のが良い
+    /// </remarks>
+    public bool IsUseOrders { get; set; } = true;
     /// <summary>
     /// 問題フィールドのサイズ
     /// </summary>
     public int FieldSize => fieldSize;
+    /// <summary>
+    /// ペアの数
+    /// </summary>
     public int PairCount => pairPositions.Count / 2;
     /// <summary>
     /// 現在のターン数を調べる
     /// </summary>
     public int Turn => orders.Count;
+
     /// <summary>
     /// 操作を記録するためのクラス
     /// </summary>
-    class Order
+    [Serializable]
+    public class Order
     {
+        /// <summary>
+        /// 座標
+        /// </summary>
+        public Vector2 position;
+        /// <summary>
+        /// サイズ
+        /// </summary>
+        public int size;
+
         /// <summary>
         /// コンストラクタ(Vector2で指定するのに注意)
         /// </summary>
@@ -56,13 +84,11 @@ public class Procon
             this.size = size;
         }
         /// <summary>
-        /// 座標
+        /// 送信用の操作記録 (<see cref="SendData.Ops"/>) からこのクラス形式に変換する
         /// </summary>
-        public Vector2 position;
-        /// <summary>
-        /// サイズ
-        /// </summary>
-        public int size;
+        /// <param name="ops"><see cref="SendData.Ops"/> 形式の操作履歴</param>
+        /// <returns>変換後のデータ</returns>
+        public static Order FromOps(SendData.Ops ops) => new(new(ops.x, ops.y), ops.n);
     }
 
     /// <summary>
@@ -70,9 +96,8 @@ public class Procon
     /// </summary>
     public Procon()
     {
-        // 問題のJSONを読み込む
-        string jsonFile = File.ReadAllText("../procon36_server/informationLog/problem.json", System.Text.Encoding.GetEncoding("utf-8"));
-        ReceiveData receiveData = JsonUtility.FromJson<ReceiveData>(jsonFile);
+        // 問題データの読み込みと反映
+        ReceiveData.Load("problem", out ReceiveData receiveData);
         fieldSize = receiveData.problem.field.size;
         initialProblem = new int[fieldSize, fieldSize];
         for (int i = 0; i < fieldSize; i++)
@@ -82,14 +107,15 @@ public class Procon
                 initialProblem[i, j] = receiveData.problem.field.entities[i * fieldSize + j];
             }
         }
+        // 問題の初期化とイベントの登録
         Initialize();
+        OnEngage += (problem) => CountPairs();
     }
     /// <summary>
     /// フィールドサイズを指定して問題を生成する
     /// </summary>
     /// <param name="size">フィールドのサイズ</param>
-    /// <param name="randomFlag"><c>true</c>にすると自動で生成した問題をシャッフルする</param>
-    public Procon(int size, bool randomFlag)
+    public Procon(int size)
     {
         // 問題のサイズは偶数であるため奇数であると数値を自動で+1する
         if (size % 2 == 1)
@@ -97,7 +123,7 @@ public class Procon
             size++;
         }
         this.fieldSize = size;
-        MakeProblem(randomFlag);
+        MakeProblem();
         OnEngage += (problem) => CountPairs();
     }
 
@@ -126,8 +152,7 @@ public class Procon
     /// <summary>
     /// 問題を自動生成する関数
     /// </summary>
-    /// <param name="isRandom">問題をシャッフルするかどうか</param>
-    void MakeProblem(bool isRandom)
+    void MakeProblem()
     {
         initialProblem = new int[fieldSize, fieldSize];
         // 一旦一次元で配列を作る
@@ -138,9 +163,7 @@ public class Procon
         {
             array[i] = (int)Mathf.Floor((count += 1) / 2);
         }
-        if (isRandom)
-        {
-            // 前回も使用したがフィッシャー–イェーツのシャッフルによってシャッフルを行う
+        // 前回も使用したがフィッシャー–イェーツのシャッフルによってシャッフルを行う
             for (int i = 0; i < fieldSize * fieldSize - 1; i++)
             {
                 int random = UnityEngine.Random.Range(i + 1, fieldSize * fieldSize);
@@ -154,7 +177,6 @@ public class Procon
                     initialProblem[i, j] = array[i * fieldSize + j];
                 }
             }
-        }
         Initialize();
     }
     /// <summary>
@@ -191,7 +213,10 @@ public class Procon
             }
         }
         // orderに操作を追加
-        orders.Add(new(position, size));
+        if (IsUseOrders)
+        {
+            orders.Add(new(position, size));
+        }
         OnEngage?.Invoke(problem);
     }
     /// <summary>
@@ -230,7 +255,10 @@ public class Procon
         }
         ReverseEngage(orders[orders.Count - 1].position, orders[orders.Count - 1].size);
         // orderの操作を削除
-        orders.RemoveAt(orders.Count - 1);
+        if (IsUseOrders)
+        {
+            orders.RemoveAt(orders.Count - 1);
+        }
     }
 
     private void CountPairs()
@@ -323,7 +351,7 @@ public class Procon
     /// 問題jsonのクラスの形式
     /// </summary>
     [Serializable]
-    public class ReceiveData
+    public class ReceiveData : CommunicationData<ReceiveData>
     {
         public int startAt;
         public Problem problem = new();
@@ -343,7 +371,7 @@ public class Procon
     /// 回答jsonのクラスの形式
     /// </summary>
     [Serializable]
-    public class SendData
+    public class SendData : CommunicationData<SendData>
     {
         public Ops[] ops;
         [Serializable]
