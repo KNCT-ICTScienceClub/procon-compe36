@@ -150,14 +150,23 @@ class Garden {
     }
 
     evaluation() {
+        let expect = 0;
+        let sum = 0;
+        let quantity = 0;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
+                this.score.compound -= this.entity.distance[this.board[i][j]];
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     this.score.match++;
                 }
+                else {
+                    sum += this.entity.distance[this.board[i][j]];
+                    expect += this.entity.distance[this.board[i][j]] ** 2;
+                    quantity++;
+                }
                 if (this.score.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
-                        this.score.horizon.head++;
+                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
                     }
                     else {
                         this.score.horizon.headFlag = 2;
@@ -165,7 +174,7 @@ class Garden {
                 }
                 if (this.score.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score.horizon.end++;
+                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
                     }
                     else {
                         this.score.horizon.endFlag = 2;
@@ -173,7 +182,7 @@ class Garden {
                 }
                 if (this.score.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score.vertical.head++;
+                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
                     }
                     else {
                         this.score.vertical.headFlag = 2;
@@ -181,31 +190,48 @@ class Garden {
                 }
                 if (this.score.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score.vertical.end++;
+                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
                     }
                     else {
                         this.score.vertical.endFlag = 2;
                     }
                 }
             }
-            if (this.score.horizon.headFlag == 2) {
-                this.score.horizon.headFlag = false;
+            switch (this.score.horizon.headFlag) {
+                case 1:
+                    this.score.horizon.headLine++;
+                    break;
+                case 2:
+                    this.score.horizon.headFlag = false;
+                    break;
             }
-            if (this.score.horizon.endFlag == 2) {
-                this.score.horizon.endFlag = false;
+            switch (this.score.horizon.endFlag) {
+                case 1:
+                    this.score.horizon.endLine++;
+                    break;
+                case 2:
+                    this.score.horizon.endFlag = false;
+                    break;
             }
-            if (this.score.vertical.headFlag == 2) {
-                this.score.vertical.headFlag = false;
+            switch (this.score.vertical.headFlag) {
+                case 1:
+                    this.score.vertical.headLine++;
+                    break;
+                case 2:
+                    this.score.vertical.headFlag = false;
+                    break;
             }
-            if (this.score.vertical.endFlag == 2) {
-                this.score.vertical.endFlag = false;
+            switch (this.score.vertical.endFlag) {
+                case 1:
+                    this.score.vertical.endLine++;
+                    break;
+                case 2:
+                    this.score.vertical.endFlag = false;
+                    break;
             }
         }
-        this.score.horizon.headLine = Math.floor(this.score.horizon.head / this.size);
-        this.score.horizon.endLine = Math.floor(this.score.horizon.end / this.size);
-        this.score.vertical.headLine = Math.floor(this.score.vertical.head / this.size);
-        this.score.vertical.endLine = Math.floor(this.score.vertical.end / this.size);
-        this.score.compound = this.score.match + this.score.horizon.head + this.score.horizon.end + this.score.vertical.head + this.score.vertical.end;
+        let variance = expect - (sum ** 2 / quantity);
+        this.score.compound = this.score.match * 2 + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3 - variance / 20;
     }
 }
 
