@@ -39,6 +39,10 @@ public class Procon
     /// </summary>
     public List<Order> orders = new();
     /// <summary>
+    /// <see cref="IsUseOrders"/> が <c>false</c> のときに代わりに使用するターン数のカウンタ 
+    /// </summary>
+    private int turn = 0;
+    /// <summary>
     /// <see cref="orders"/> に操作履歴を記録するか
     /// </summary>
     /// <remarks>
@@ -56,7 +60,7 @@ public class Procon
     /// <summary>
     /// 現在のターン数を調べる
     /// </summary>
-    public int Turn => orders.Count;
+    public int Turn => IsUseOrders ? orders.Count : turn;
 
     /// <summary>
     /// 操作を記録するためのクラス
@@ -217,6 +221,10 @@ public class Procon
         {
             orders.Add(new(position, size));
         }
+        else
+        {
+            turn++;
+        }
         OnEngage?.Invoke(problem);
     }
     /// <summary>
@@ -259,6 +267,10 @@ public class Procon
         {
             orders.RemoveAt(orders.Count - 1);
         }
+        else
+        {
+            turn--;
+        }
     }
 
     private void CountPairs()
@@ -284,7 +296,7 @@ public class Procon
                     }
                 }
                 // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
-                else if (i == fieldSize - 1)
+                else if (i == fieldSize - 1 && j + 1 < fieldSize)
                 {
                     if (problem[i, j] == problem[i, j + 1])
                     {
@@ -292,7 +304,7 @@ public class Procon
                         pairPositions.Add(new(j + 1, i));
                     }
                 }
-                else if (j == fieldSize - 1)
+                else if (j == fieldSize - 1 && i + 1 < fieldSize)
                 {
                     if (problem[i, j] == problem[i + 1, j])
                     {
