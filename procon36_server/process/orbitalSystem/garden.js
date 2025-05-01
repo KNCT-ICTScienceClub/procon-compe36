@@ -150,19 +150,10 @@ class Garden {
     }
 
     evaluation() {
-        let expect = 0;
-        let sum = 0;
-        let quantity = 0;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                this.score.compound -= this.entity.distance[this.board[i][j]];
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     this.score.match++;
-                }
-                else {
-                    sum += this.entity.distance[this.board[i][j]];
-                    expect += this.entity.distance[this.board[i][j]] ** 2;
-                    quantity++;
                 }
                 if (this.score.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
@@ -230,8 +221,7 @@ class Garden {
                     break;
             }
         }
-        let variance = expect - (sum ** 2 / quantity);
-        this.score.compound = this.score.match * 2 + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3 - variance / 20;
+        this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
     }
 }
 
@@ -240,7 +230,6 @@ class Score {
     compound;
     horizon = new Line();
     vertical = new Line();
-    compound;
 }
 
 class Line {
