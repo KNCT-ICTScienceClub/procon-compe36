@@ -49,8 +49,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 31a0107657cc4f545b42a3c3d2515a93, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  entityManager: {fileID: 0}
   numberField: {fileID: 3118703271640656161}
   meshRenderer: {fileID: 1723959566562587467}
+  isSelected: 0
+  isPair: 0
+  number: 0
+  fieldSize: 0
 --- !u!33 &3691364831774683776
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -82,7 +87,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 0431bb0d7077d2343a3c112f311109b3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

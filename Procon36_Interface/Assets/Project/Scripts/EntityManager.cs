@@ -100,22 +100,28 @@ public class EntityManager : MonoBehaviour
         // 選択範囲の初期化
         selection = new(in entities);
         // 「導き」したときの問題の変更を表示にも反映させるようにする
-        procon.OnEngage += (problem) => 
+        procon.OnEngage += (problem, pairs, turn) => 
         {
+            // エンティティの移動によるその座標の数値を変更
             for (int i = 0; i < entities.Count; i++)
             {
                 for (int j = 0; j < entities.Count; j++)
                 {
-                    entities[j][i].SetNumber(problem[i, j]);
-                    status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
-                    
+                    entities[j][i].SetNumber(problem[i, j]);                    
                 }
             }
-        };
-        procon.OnEngage += (problem) =>
-        {
-            entities.ForEach(line => line.ForEach(entity => entity.IsPair = false));
-            procon.pairPositions.ForEach(pos => entities[pos.x][pos.y].IsPair = true);
+            // ペアができているエンティティに情報を渡す
+            entities.ForEach(line => line.ForEach(entity => entity.HasPair = false));
+            pairs.ForEach(pair => 
+            {
+                // 一旦タプルに保存して
+                var p = (entities[pair.a.x][pair.a.y], entities[pair.b.x][pair.b.y]);
+                // ペアができていることをそれぞれに知らせる
+                (p.Item1.HasPair, p.Item2.HasPair) = (true, true);
+                (p.Item1.MyPair, p.Item2.MyPair) = (p.Item2, p.Item1);
+            });
+            // UIに反映
+            status.text = string.Format("turn: {0}\npair: {1}", turn, pairs.Count);
         };
         // リプレイする
         if (mode == Mode.Replay)
@@ -162,14 +168,6 @@ public class EntityManager : MonoBehaviour
         {
             procon.Engage(order.position, order.size);
             yield return new WaitForSeconds(seconds);
-            for (int i = 0; i < procon.FieldSize; i++)
-            {
-                for (int j = 0; j < procon.FieldSize; j++)
-                {
-                    entities[j][i].SetNumber(procon.problem[i, j]);
-                    status.text = string.Format("turn: {0}\npair: {1}", procon.Turn, procon.PairCount);
-                }
-            }
         }
     } 
 }

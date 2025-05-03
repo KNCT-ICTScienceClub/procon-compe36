@@ -15,15 +15,15 @@ public class Procon
     /// <summary>
     /// ペアができている全てのエンティティの座標
     /// </summary>
-    /// <remarks>
-    /// <b>ペアの数は</b> <see cref="PairCount"/> <b>を使用すること！</b><br/>
-    /// このリストの <c>Count</c> プロパティを参照してはいけない
-    /// </remarks>
-    public List<Vector2Int> pairPositions = new();
+    public List<Pair> pairs = new();
     /// <summary>
     /// <see cref="Engage"/> 実行時に発火するイベントを登録する
+    /// <para>3つの引数を渡す</para>
+    /// <para>1. 現在の問題の状態 (problem)</para>
+    /// <para>2. 現在できているペア (pairs)</para>
+    /// <para>3. 現在のターン数 (turn)</para>
     /// </summary>
-    public event Action<int[,]> OnEngage;
+    public event Action<int[,], List<Pair>, int> OnEngage;
     /// <summary>
     /// 問題の初期状態
     /// </summary>
@@ -53,10 +53,6 @@ public class Procon
     /// 問題フィールドのサイズ
     /// </summary>
     public int FieldSize => fieldSize;
-    /// <summary>
-    /// ペアの数
-    /// </summary>
-    public int PairCount => pairPositions.Count / 2;
     /// <summary>
     /// 現在のターン数を調べる
     /// </summary>
@@ -96,6 +92,27 @@ public class Procon
     }
 
     /// <summary>
+    /// ペアになっているエンティティのそれぞれの座標
+    /// </summary>
+    [Serializable]
+    public struct Pair
+    {
+        /// <summary>
+        /// 一方のエンティティの座標
+        /// </summary>
+        public Vector2Int a;
+        /// <summary>
+        /// もう一方のエンティティの座標
+        /// </summary>
+        public Vector2Int b;
+        public Pair(Vector2Int a, Vector2Int b)
+        {
+            this.a = a;
+            this.b = b;
+        }
+    }
+
+    /// <summary>
     /// 外部からJSONを読み込んで問題を生成する
     /// </summary>
     public Procon()
@@ -111,9 +128,8 @@ public class Procon
                 initialProblem[i, j] = receiveData.problem.field.entities[i * fieldSize + j];
             }
         }
-        // 問題の初期化とイベントの登録
+        // 問題の初期化
         Initialize();
-        OnEngage += (problem) => CountPairs();
     }
     /// <summary>
     /// フィールドサイズを指定して問題を生成する
@@ -128,7 +144,6 @@ public class Procon
         }
         this.fieldSize = size;
         MakeProblem();
-        OnEngage += (problem) => CountPairs();
     }
 
     /// <summary>
@@ -225,7 +240,8 @@ public class Procon
         {
             turn++;
         }
-        OnEngage?.Invoke(problem);
+        
+        OnEngage?.Invoke(problem, FindPairs(), Turn);
     }
     /// <summary>
     /// 一手操作を戻す関数
@@ -259,7 +275,8 @@ public class Procon
                     problem[(int)position.y + j, (int)position.x + i] = cell[i, j];
                 }
             }
-            OnEngage?.Invoke(problem);
+            
+            OnEngage?.Invoke(problem, FindPairs(), Turn);
         }
         ReverseEngage(orders[orders.Count - 1].position, orders[orders.Count - 1].size);
         // orderの操作を削除
@@ -273,9 +290,14 @@ public class Procon
         }
     }
 
-    private void CountPairs()
+    /// <summary>
+    /// 現在ペアになっているエンティティを探す
+    /// </summary>
+    /// <returns>全てのペア（<c>Count</c> プロパティでペアの数を取得可能）</returns>
+    private List<Pair> FindPairs()
     {
-        pairPositions.Clear();
+        // リストをクリアして探し直し
+        pairs.Clear();
         // 下と右方向の隣同士を比較していく
         for (int i = 0; i < fieldSize; i++)
         {
@@ -285,14 +307,12 @@ public class Procon
                 {
                     if (problem[i, j] == problem[i + 1, j])
                     {
-                        // 実際の画面表示に合うようにxy座標を反対にする
-                        pairPositions.Add(new(j, i));
-                        pairPositions.Add(new(j, i + 1));
+                        // 実際の画面表示に合うようにxy座標を反対にして追加しておく
+                        pairs.Add(new(new(j, i), new(j, i + 1)));
                     }
                     if (problem[i, j] == problem[i, j + 1])
                     {
-                        pairPositions.Add(new(j, i));
-                        pairPositions.Add(new(j + 1, i));
+                        pairs.Add(new(new(j, i), new(j + 1, i)));
                     }
                 }
                 // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
@@ -300,64 +320,20 @@ public class Procon
                 {
                     if (problem[i, j] == problem[i, j + 1])
                     {
-                        pairPositions.Add(new(j, i));
-                        pairPositions.Add(new(j + 1, i));
+                        pairs.Add(new(new(j, i), new(j + 1, i)));
                     }
                 }
                 else if (j == fieldSize - 1 && i + 1 < fieldSize)
                 {
                     if (problem[i, j] == problem[i + 1, j])
                     {
-                        pairPositions.Add(new(j, i));
-                        pairPositions.Add(new(j, i + 1));
+                        pairs.Add(new(new(j, i), new(j, i + 1)));
                     }
                 }
-
             }
         }
+        return pairs;
     }
-
-    /// <summary>
-    /// 隣り合った数値が同じである要素の数
-    /// </summary>
-    // public int PairCount
-    // {
-    //     get
-    //     {
-    //         int count = 0;
-    //         // 下と右方向の隣同士を比較していく
-    //         for (int i = 0; i < fieldSize; i++)
-    //         {
-    //             for (int j = 0; j < fieldSize; j++)
-    //             {
-    //                 if (i + 1 < fieldSize && j + 1 < fieldSize)
-    //                 {
-    //                     if (problem[i, j] == problem[i + 1, j] || problem[i, j] == problem[i, j + 1])
-    //                     {
-    //                         count++;
-    //                     }
-    //                 }
-    //                 // 下か右隣を数えるとはみ出してしまいそうなときはどっちかしか数えん
-    //                 else if (i == fieldSize - 1)
-    //                 {
-    //                     if (problem[i, j] == problem[i, j + 1])
-    //                     {
-    //                         count++;
-    //                     }
-    //                 }
-    //                 else if (j == fieldSize - 1)
-    //                 {
-    //                     if (problem[i, j] == problem[i + 1, j])
-    //                     {
-    //                         count++;
-    //                     }
-    //                 }
-
-    //             }
-    //         }
-    //         return count;
-    //     }
-    // }
 
     /// <summary>
     /// 問題jsonのクラスの形式
