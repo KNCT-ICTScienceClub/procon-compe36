@@ -1,15 +1,57 @@
 const EntityInfo = require("./entityInfo");
+const { LeafInfo, Score, Order } = require("./satellite");
 
+/**
+ * ノードとなるクラス
+ */
 class Garden {
+    /**
+     * 現在のボード
+     * @type {number[][]}
+     */
     board;
+    /**
+     * ボードのサイズ
+     * @type {number}
+     */
     size;
+    /**
+     * 各エンティティの情報が格納された配列
+     * @type {EntityInfo}
+     */
     entity;
+    /**
+     * ノードの部分
+     * @type {Garden[]}
+     */
     branch = [];
+    /**
+     * スコア
+     * @type {Score}
+     */
     score = new Score();
+    /**
+     * 探索の幅
+     * @type {number}
+     */
     width;
+    /**
+     * このノードの現在地を示すインデックス
+     * @type {number[]}
+     */
     index = [];
+    /**
+     * 操作手順
+     * @type {Order}
+     */
     order;
 
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {EntityInfo} entity　エンゲージ後のボード
+     * @param {Order} order エンゲージ時の操作
+     * @param {number} width
+     */
     constructor(board, entity, order, width) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
@@ -17,55 +59,85 @@ class Garden {
         this.entity.copyInfo(entity);
         this.evaluation();
         this.entity.score = this.score;
-        this.order = order;
         this.width = width;
+        this.order = order;
     }
 
-    pruning(array, depth, goal) {
+    /**
+     * 葉の情報を抜き出し剪定を行う
+     * @param {LeafInfo} leaves 葉の情報
+     * @param {number} depth 深さ
+     */
+    //最初に指定したdepthの回数だけ下の階層へ潜る
+    pruning(leaves, depth) {
+        //指定した深さまで潜ると実行される
         if (depth == 1) {
-            if (this.branch[0]?.score.match == this.size * this.size) {
-                goal.push(this.branch[0].index);
-            }
-            else {
-                array.push({ index: this.branch[0]?.index[0], score: this.branch[0]?.score.compound });
-            }
+            //葉の情報を書き込む
+            /*
+            三項演算子
+            完成盤面であった場合はそのノードに到達するまでの全てのインデックスが渡される
+            そうでない時はその葉が根に直接繋がっているノードのどれに属しているかを示すインデックスを渡す
+            */
+            //総合的なスコアを渡す
+            leaves.push(new LeafInfo(this.branch[0]?.score.match == this.size * this.size ? this.branch[0].index : this.branch[0]?.index[0], this.branch[0].score.compound));
         }
+        //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
         else {
-            this.branch.map(element => element.pruning(array, depth - 1, goal));
+            this.branch.map(element => element.pruning(leaves, depth - 1));
         }
     }
 
+    /**
+     * 指定した深さまで再帰的に枝を生成する
+     * @param {number} depth
+     */
     makeTrunk(depth) {
         if (depth != 0) {
-            this.makeBranch(this.index, false);
+            this.extendBranch(this.index, false);
             this.branch.map(element => element.makeTrunk(depth - 1));
         }
     }
 
-    extendBranch(depth) {
+    /**
+     * 全ての葉の部分から枝を生成する
+     * @param {number} depth 
+     */
+    makeBranch(depth) {
+        //指定した深さまで潜ると実行される
         if (depth == 1) {
-            this.makeBranch(this.index);
+            this.extendBranch(this.index);
         }
+        //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
         else {
-            this.branch.map(element => element.extendBranch(depth - 1));
+            this.branch.map(element => element.makeBranch(depth - 1));
         }
     }
 
-    makeBranch(index, adjust = true) {
+    /**
+     * 現在の葉からノードを作成する
+     * @param {number[]} index 
+     * @param {boolean} adjust 
+     */
+    extendBranch(index, adjust = true) {
         let suggest = [];
         this.matchSuggest(suggest);
         if (adjust) {
             this.adjustSuggest(suggest);
         }
+        //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
+            //並び替えを行ったことにより現在の要素と次の要素が等しかった場合重複した操作となるので削除する
             if (suggest[i].position[0] == suggest[i + 1].position[0] && suggest[i].position[1] == suggest[i + 1].position[1] && suggest[i].size == suggest[i + 1].size) {
                 delete suggest[i];
             }
         }
         suggest.map(element => {
+            //その操作に従ってエンゲージを行う
             this.engage(element.position, element.size);
+            //操作したボードで枝を作る
             let twig = new Garden(this.board, this.entity, element, this.width);
+            //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
             if (element.type == 2) {
                 if (twig.score.compound > this.score.compound) {
                     this.branch.push(twig);
@@ -74,36 +146,54 @@ class Garden {
             else {
                 this.branch.push(twig);
             }
+            //逆の操作をしてボードを元に戻す
             this.engage(element.position, element.size, true);
         });
+        //スコアの高い順に並び替えて上位のスコアの操作を幅の数値の分だけ残す
         this.branch = this.branch.toSorted((a, b) => b.score.compound - a.score.compound).slice(0, this.width);
+        //インデックスを更新する
         for (let i = 0; i < this.branch.length; i++) {
-            this.branch[i].index = index.slice(1);
-            this.branch[i].index.push(i);
+            //インデックスの左側をカットして末尾に新しく指定したインデックスを追加する
+            this.branch[i].index = index.slice(1).concat(i);
         }
     }
 
+    /**
+     * 次ターンのみに着目して、ペアを生成できる操作を列挙する関数
+     * @param {Order[]} suggest 列挙した操作を格納した配列
+     * @param {number} limit 揃ってないところから+limitの数値までの幅の枠を作ってそこの地点についてだけサジェストを出す
+     */
     matchSuggest(suggest, limit = this.size) {
+        //全て揃っている列は操作する必要がないので無視してfor文を回す
         for (let i = this.score.horizon.headLine; i < this.size - this.score.horizon.endLine; i++) {
             for (let j = this.score.vertical.headLine; j < this.size - this.score.vertical.endLine; j++) {
+                //この条件式を発動させると枠のような形で位置が指定される
                 if (limit <= i && limit == j) {
                     if (this.size - this.score.horizon.headLine - this.score.horizon.endLine - limit - i > 0) {
                         j += this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 > 0 ? this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 : 0;
                     }
                 }
+                //ペアになっていないエンティティに対してサジェストを出す
                 if (this.entity.distance[this.board[i][j]] != 1) {
-                    let target = this.entity.matching(this.board[i][j]);
-                    if (0 <= target.position[0] && target.position[0] + target.size <= this.size && 0 <= target.position[1] && target.position[1] + target.size <= this.size) {
-                        suggest.push(target);
+                    let order = this.entity.matching(this.board[i][j]);
+                    //位置によっては指定した場所がボードを飛び出すことがあるので条件式でふるいにかける
+                    if (0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
+                        suggest.push(order);
                     }
                 }
             }
         }
     }
 
+    /**
+     * ペアになっている要素の塊を端に寄せる操作を列挙する関数
+     * @param {Order[]} suggest 列挙した操作を格納した配列
+     */
     adjustSuggest(suggest) {
+        //全て揃っている列は操作する必要がないので無視してfor文を回す
         for (let i = this.score.horizon.headLine + 1; i < this.size - this.score.horizon.endLine - 1; i++) {
             for (let j = this.score.vertical.headLine + 1; j < this.size - this.score.vertical.endLine - 1; j++) {
+                //ペアになっているエンティティに対してサジェストを出す
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     suggest.push(this.entity.adjusting(this.board[i][j]));
                 }
@@ -111,6 +201,12 @@ class Garden {
         }
     }
 
+    /**
+     * 現在のボードを参照して「導き」を行う
+     * @param {number[]} position 園の左上の座標[x,y]
+     * @param {number} size 園のサイズ
+     * @param {boolean} reverse trueにすると左回転になる
+     */
     engage(position, size, reverse = false) {
         if ((position?.length ?? 0) < 2) {
             throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
@@ -149,6 +245,9 @@ class Garden {
         }
     }
 
+    /**
+     * scoreの数値を設定する関数
+     */
     evaluation() {
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
@@ -223,22 +322,6 @@ class Garden {
         }
         this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
     }
-}
-
-class Score {
-    match = 0;
-    compound;
-    horizon = new Line();
-    vertical = new Line();
-}
-
-class Line {
-    head = 0;
-    headLine = 0;
-    headFlag = 1;
-    end = 0;
-    endLine = 0;
-    endFlag = 1;
 }
 
 module.exports = Garden;
