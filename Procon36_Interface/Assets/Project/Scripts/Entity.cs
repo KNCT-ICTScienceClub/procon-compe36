@@ -28,6 +28,10 @@ public class Entity : MonoBehaviour
     /// </summary>
     [SerializeField] private bool hasPair = false;
     /// <summary>
+    /// できている全てのペアを同じ色で表示するか（表示用）
+    /// </summary>
+    [SerializeField] private bool isArrangePairsColor = false;
+    /// <summary>
     /// 自分のペア（表示用）
     /// </summary>
     [SerializeField] private Entity myPair;
@@ -70,6 +74,13 @@ public class Entity : MonoBehaviour
     /// </remarks>
     public bool HasPair { private get => hasPair; set => hasPair = value; }
     /// <summary>
+    /// できている全てのペアを同じ色で表示するか
+    /// </summary>
+    /// <remarks>
+    /// 外部（主に <see cref="EntityManager"/> ）からフラグをセットする
+    /// </remarks>
+    public bool IsArrangePairsColor { private get => isArrangePairsColor; set => isArrangePairsColor = value; }
+    /// <summary>
     /// シェーダーのプロパティをIDとしてキャッシュする
     /// </summary>
     private class ShaderPropertyID
@@ -79,21 +90,25 @@ public class Entity : MonoBehaviour
         /// </summary>
         public static readonly int _color = Shader.PropertyToID("_color");
         /// <summary>
-        /// ホバーされたら <c>True</c>
+        /// ホバーされたら <c>true</c>
         /// </summary>
         public static readonly int _isHovered = Shader.PropertyToID("_isHovered");
         /// <summary>
-        /// ペアがあれば <c>True</c>
+        /// ペアがあれば <c>true</c>
         /// </summary>
         public static readonly int _hasPair = Shader.PropertyToID("_hasPair");
         /// <summary>
-        /// 左右方向のペアなら <c>True</c>
+        /// 左右方向のペアなら <c>true</c>
         /// </summary>
         public static readonly int _isHorizontalDirection = Shader.PropertyToID("_isHorizontalDirection");
         /// <summary>
-        /// 自分がペアに対して下か左に位置するなら <c>True</c>
+        /// 自分がペアに対して下か左に位置するなら <c>true</c>
         /// </summary>
         public static readonly int _isInvertDirection = Shader.PropertyToID("_isInvertDirection");
+        /// <summary>
+        /// 全てのペアを同じ色にするなら <c>true</c>
+        /// </summary>
+        public static readonly int _isArrangePairsColor = Shader.PropertyToID("_isArrangePairsColor");
     }
 
     void Awake()
@@ -168,6 +183,8 @@ public class Entity : MonoBehaviour
         {
             meshRenderer.material.SetFloat(ShaderPropertyID._hasPair, 0);
         }
+        // 
+        meshRenderer.material.SetFloat(ShaderPropertyID._isArrangePairsColor, isArrangePairsColor ? 1 : 0);
     }
 
     /// <summary>

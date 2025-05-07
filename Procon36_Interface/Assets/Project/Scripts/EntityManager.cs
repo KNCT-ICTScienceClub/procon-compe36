@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class EntityManager : MonoBehaviour
@@ -49,6 +50,10 @@ public class EntityManager : MonoBehaviour
     /// </summary>
     [SerializeField] private TMP_Dropdown modeDropdown;
     /// <summary>
+    /// 
+    /// </summary>
+    [SerializeField] private Toggle toggle;
+    /// <summary>
     /// 生成したエンティティを格納する二次元リスト
     /// </summary>
     private List<List<Entity>> entities = new();
@@ -72,6 +77,7 @@ public class EntityManager : MonoBehaviour
         // Debug.Log(await communication.Receive());
         modeDropdown.value = (int)mode;
         modeDropdown.onValueChanged.AddListener((mode) => this.mode = (Mode)mode);
+        toggle.onValueChanged.AddListener((isOn) => entities?.ForEach(line => line.ForEach(entity => entity.IsArrangePairsColor = isOn)));
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
