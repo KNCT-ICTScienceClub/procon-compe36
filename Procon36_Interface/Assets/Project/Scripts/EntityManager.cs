@@ -65,8 +65,11 @@ public class EntityManager : MonoBehaviour
         AdjustView(procon.FieldSize);
     }
 
-    void OnEnable()
+    async void OnEnable()
     {
+        // 通信テスト
+        // Communication communication = new();
+        // Debug.Log(await communication.Receive());
         modeDropdown.value = (int)mode;
         modeDropdown.onValueChanged.AddListener((mode) => this.mode = (Mode)mode);
     }
