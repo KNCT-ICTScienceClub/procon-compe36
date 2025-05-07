@@ -1,4 +1,4 @@
-const {Score,Order} = require("./satellite");
+const { Score, Order } = require("./satellite");
 
 /**
  * エンティティの情報を管理するためのクラス
@@ -35,6 +35,7 @@ class EntityInfo {
      * @type {Score}
      */
     score;
+    updateFlag;
 
     /**
      * 渡されたボードに対しての情報を作成する
@@ -46,6 +47,7 @@ class EntityInfo {
         this.vector = new Array(this.size * this.size);
         this.direction = new Array(this.size * this.size);
         this.distance = new Array(this.size * this.size);
+        this.updateFlag = new Array(this.size * this.size).fill(true);
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 this.position[board[i][j]] = [j, i];
@@ -58,7 +60,6 @@ class EntityInfo {
                 }
             }
         }
-
     }
 
     /**
@@ -71,6 +72,7 @@ class EntityInfo {
         this.vector = [...source.vector];
         this.distance = [...source.distance];
         this.direction = [...source.direction];
+        this.updateFlag = new Array(this.size * this.size).fill(false);
     }
 
     /**
@@ -85,6 +87,8 @@ class EntityInfo {
         this.distance[pair] = this.distance[value];
         this.direction[value] = (this.vector[value][0] > 0 ? 2 : (this.vector[value][0] != 0) ? 5 : 1) * (this.vector[value][1] > 0 ? 3 : (this.vector[value][1] != 0) ? 7 : 1);
         this.direction[pair] = (this.vector[pair][0] > 0 ? 2 : (this.vector[pair][0] != 0) ? 5 : 1) * (this.vector[pair][1] > 0 ? 3 : (this.vector[pair][1] != 0) ? 7 : 1);
+        this.updateFlag[value] = false;
+        this.updateFlag[value] = false;
     }
 
     /**

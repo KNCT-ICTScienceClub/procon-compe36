@@ -87,10 +87,10 @@ class Lampyrisma extends Procon {
             //スコアを高い順に並び替える
             leaves.sort((a, b) => b.score - a.score);
             let index = [];
+            //console.log(leaves);
             //インデックスが配列かどうか調べる
             if (!leaves[0].index.length) {
                 let duplicate = [...Array(this.width).fill(0)];
-                //console.log(highScoreIndex);
                 //スコアが最高値の葉が複数あったときには数が多い方を選択する
                 for (let i = 0; leaves[0].score == leaves[i].score && i < leaves.length - 1; i++) {
                     duplicate[leaves[i].index]++;

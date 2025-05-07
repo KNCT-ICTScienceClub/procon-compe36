@@ -24,7 +24,7 @@ class Garden {
      * ノードの部分
      * @type {Garden[]}
      */
-    branch = [];
+    branch;
     /**
      * スコア
      * @type {Score}
@@ -61,6 +61,7 @@ class Garden {
         this.entity.score = this.score;
         this.width = width;
         this.order = order;
+        this.branch = Array(this.width).fill({ score: new Score() });
     }
 
     /**
@@ -79,11 +80,13 @@ class Garden {
             そうでない時はその葉が根に直接繋がっているノードのどれに属しているかを示すインデックスを渡す
             */
             //総合的なスコアを渡す
-            leaves.push(new LeafInfo(this.branch[0]?.score.match == this.size * this.size ? this.branch[0].index : this.branch[0]?.index[0], this.branch[0].score.compound));
+            if (this.branch.length != 0) {
+                leaves.push(new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
+            }
         }
         //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
         else {
-            this.branch.map(element => element.pruning(leaves, depth - 1));
+            this.branch.forEach(element => element.pruning(leaves, depth - 1));
         }
     }
 
@@ -94,7 +97,7 @@ class Garden {
     makeTrunk(depth) {
         if (depth != 0) {
             this.extendBranch(this.index, false);
-            this.branch.map(element => element.makeTrunk(depth - 1));
+            this.branch.forEach(element => element.makeTrunk(depth - 1));
         }
     }
 
@@ -109,7 +112,7 @@ class Garden {
         }
         //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
         else {
-            this.branch.map(element => element.makeBranch(depth - 1));
+            this.branch.forEach(element => element.makeBranch(depth - 1));
         }
     }
 
@@ -132,30 +135,44 @@ class Garden {
                 delete suggest[i];
             }
         }
-        suggest.map(element => {
-            //その操作に従ってエンゲージを行う
-            this.engage(element.position, element.size);
-            //操作したボードで枝を作る
-            let twig = new Garden(this.board, this.entity, element, this.width);
-            //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
-            if (element.type == 2) {
-                if (twig.score.compound > this.score.compound) {
-                    this.branch.push(twig);
-                }
-            }
-            else {
-                this.branch.push(twig);
-            }
-            //逆の操作をしてボードを元に戻す
-            this.engage(element.position, element.size, true);
-        });
-        //スコアの高い順に並び替えて上位のスコアの操作を幅の数値の分だけ残す
-        this.branch = this.branch.toSorted((a, b) => b.score.compound - a.score.compound).slice(0, this.width);
+        console.log(suggest.filter(element=>element.type==1).length);
+        this.forecast(suggest);
         //インデックスを更新する
-        for (let i = 0; i < this.branch.length; i++) {
-            //インデックスの左側をカットして末尾に新しく指定したインデックスを追加する
-            this.branch[i].index = index.slice(1).concat(i);
+        //インデックスの左側をカットして末尾に新しく指定したインデックスを追加する
+        this.branch.forEach((element, i) => element.index = index.slice(1).concat(i));
+    }
+
+    /**
+     * その手のスコアの予測を行う
+     * @param {Order[]} suggest 
+     */
+    forecast(suggest) {
+        const growing = (suggest) => {
+            this.entity.updateFlag.forEach((flag,index)=>{
+                if(flag){
+                    this.entity.update(index)
+                }
+            });
+            let twig = new Garden(this.board, this.entity, suggest, this.width);
+            //操作したボードで枝を作る
+            //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
+            if (suggest.type == 1 || (suggest.type == 2 && twig.score.compound > this.score.compound)) {
+                this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
+            }
         }
+        if (suggest[0]) {
+            this.engage(suggest[0].position, suggest[0].size);
+            growing(suggest[0]);
+            suggest.slice(1).reduce((previous, current) => {
+                this.engage(previous.position, previous.size, true);
+                this.engage(current.position, current.size);
+                growing(current);
+                return current;
+            }, suggest[0]);
+            this.engage(suggest.at(-1).position, suggest.at(-1).size, true);
+        }
+        //branchの要素の中に初期値の物があれば消す
+        this.branch = this.branch.filter(element => element?.size);
     }
 
     /**
@@ -234,12 +251,12 @@ class Garden {
                 if (reverse) {
                     this.board[i + position[1]][j + position[0]] = area[j][i];
                     this.entity.position[area[j][i]] = [j + position[0], i + position[1]];
-                    this.entity.update(area[j][i]);
+                    this.entity.updateFlag[area[j][i]] = true;
                 }
                 else {
                     this.board[i + position[1]][j + position[0]] = area[i][j];
                     this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
-                    this.entity.update(area[i][j]);
+                    this.entity.updateFlag[area[i][j]] = true;
                 }
             }
         }

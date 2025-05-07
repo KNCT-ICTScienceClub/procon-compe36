@@ -72,7 +72,7 @@ class Score {
      * 総合的な評価値
      * @type {number}
      */
-    compound;
+    compound = 0;
     /**
      * 水平方向の列に関するスコア
      * @type {Line}
