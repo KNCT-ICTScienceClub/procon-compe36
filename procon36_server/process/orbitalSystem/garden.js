@@ -1,10 +1,7 @@
 const EntityInfo = require("./entityInfo");
 const { LeafInfo, Score, Order } = require("./satellite");
 
-/**
- * ノードとなるクラス
- */
-class Garden {
+class branchBase {
     /**
      * 現在のボード
      * @type {number[][]}
@@ -21,15 +18,122 @@ class Garden {
      */
     entity;
     /**
-     * ノードの部分
-     * @type {Garden[]}
+     * 操作手順
+     * @type {Order}
      */
-    branch;
+    order;
     /**
      * スコア
      * @type {Score}
      */
-    score = new Score();
+    score;
+
+    /**
+     * scoreの数値を設定する関数
+     */
+    evaluation() {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.score.horizon.headFlag) {
+                    if (this.entity.distance[this.board[i][j]] == 1) {
+                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.horizon.headFlag = 2;
+                    }
+                }
+                if (this.score.horizon.endFlag) {
+                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
+                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.horizon.endFlag = 2;
+                    }
+                }
+                if (this.score.vertical.headFlag) {
+                    if (this.entity.distance[this.board[j][i]] == 1) {
+                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.vertical.headFlag = 2;
+                    }
+                }
+                if (this.score.vertical.endFlag) {
+                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
+                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.vertical.endFlag = 2;
+                    }
+                }
+            }
+            switch (this.score.horizon.headFlag) {
+                case 1:
+                    this.score.horizon.headLine++;
+                    break;
+                case 2:
+                    this.score.horizon.headFlag = false;
+                    break;
+            }
+            switch (this.score.horizon.endFlag) {
+                case 1:
+                    this.score.horizon.endLine++;
+                    break;
+                case 2:
+                    this.score.horizon.endFlag = false;
+                    break;
+            }
+            switch (this.score.vertical.headFlag) {
+                case 1:
+                    this.score.vertical.headLine++;
+                    break;
+                case 2:
+                    this.score.vertical.headFlag = false;
+                    break;
+            }
+            switch (this.score.vertical.endFlag) {
+                case 1:
+                    this.score.vertical.endLine++;
+                    break;
+                case 2:
+                    this.score.vertical.endFlag = false;
+                    break;
+            }
+            if (!this.score.horizon.headFlag && !this.score.horizon.endFlag && !this.score.vertical.headFlag && !!this.score.vertical.endFlag) {
+                this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
+            }
+        }
+    }
+}
+
+class Twig extends branchBase {
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {EntityInfo} entity　エンゲージ後のボード
+     * @param {Order} order エンゲージ時の操作
+     * @param {number} match ペアの数
+     */
+    constructor(board, entity, order, match) {
+        super();
+        this.score = new Score();
+        this.score.match = match;
+        this.size = board.length;
+        this.board = board;
+        this.order = order;
+        this.entity = entity
+        this.evaluation();
+    }
+}
+
+/**
+ * ノードとなるクラス
+ */
+class Garden extends branchBase {
+    /**
+     * ノードの部分
+     * @type {Garden[]}
+     */
+    branch;
     /**
      * 探索の幅
      * @type {number}
@@ -40,28 +144,24 @@ class Garden {
      * @type {number[]}
      */
     index = [];
-    /**
-     * 操作手順
-     * @type {Order}
-     */
-    order;
 
     /**
      * @param {number[][]} board エンゲージ後のボード
      * @param {EntityInfo} entity　エンゲージ後のボード
      * @param {Order} order エンゲージ時の操作
      * @param {number} width
+     * @param {Score} score 
      */
-    constructor(board, entity, order, width) {
+    constructor(board, entity, order, width, score = new Score()) {
+        super();
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
         this.entity.copyInfo(entity);
-        this.evaluation();
+        this.score.copyScore(score);
         this.entity.score = this.score;
         this.width = width;
         this.order = order;
-        this.branch = Array(this.width).fill({ score: new Score() });
     }
 
     /**
@@ -135,44 +235,51 @@ class Garden {
                 delete suggest[i];
             }
         }
-        console.log(suggest.filter(element=>element.type==1).length);
-        this.forecast(suggest);
+        this.branch = this.forecast(suggest);
         //インデックスを更新する
         //インデックスの左側をカットして末尾に新しく指定したインデックスを追加する
         this.branch.forEach((element, i) => element.index = index.slice(1).concat(i));
     }
 
     /**
-     * その手のスコアの予測を行う
+     * その手のスコアの予測を行い上位のスコアの枝を返す
      * @param {Order[]} suggest 
+     * @returns {Garden[]}
      */
     forecast(suggest) {
-        const growing = (suggest) => {
-            this.entity.updateFlag.forEach((flag,index)=>{
-                if(flag){
+        let twigs = Array(this.width).fill({ score: new Score() });
+        suggest.forEach(element => {
+            //その操作に従ってエンゲージを行う
+            this.engage(element.position, element.size);
+            this.entity.updateFlag.forEach((flag, index) => {
+                if (flag) {
                     this.entity.update(index)
                 }
             });
-            let twig = new Garden(this.board, this.entity, suggest, this.width);
-            //操作したボードで枝を作る
+            //操作したボードで候補を作る
+            let twig = new Twig(this.board, this.entity, element);
             //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
-            if (suggest.type == 1 || (suggest.type == 2 && twig.score.compound > this.score.compound)) {
-                this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
+            if (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound)) {
+                twigs = twigs.toSpliced(twigs.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
             }
-        }
-        if (suggest[0]) {
-            this.engage(suggest[0].position, suggest[0].size);
-            growing(suggest[0]);
-            suggest.slice(1).reduce((previous, current) => {
-                this.engage(previous.position, previous.size, true);
-                this.engage(current.position, current.size);
-                growing(current);
-                return current;
-            }, suggest[0]);
-            this.engage(suggest.at(-1).position, suggest.at(-1).size, true);
-        }
-        //branchの要素の中に初期値の物があれば消す
-        this.branch = this.branch.filter(element => element?.size);
+            //逆の操作をしてボードを元に戻す
+            this.engage(element.position, element.size, true);
+        });
+        //branchの要素の中に初期値の物があれば消し候補を枝にする
+        return twigs.filter(element => element?.size).map(element => {
+            //その操作に従ってエンゲージを行う
+            this.engage(element.order.position, element.order.size);
+            this.entity.updateFlag.forEach((flag, index) => {
+                if (flag) {
+                    this.entity.update(index)
+                }
+            });
+            //操作したボードで枝を作る
+            let branch = new Garden(this.board, this.entity, element.order, this.width, element.score);
+            //逆の操作をしてボードを元に戻す
+            this.engage(element.order.position, element.order.size, true);
+            return branch;
+        });
     }
 
     /**
@@ -260,84 +367,6 @@ class Garden {
                 }
             }
         }
-    }
-
-    /**
-     * scoreの数値を設定する関数
-     */
-    evaluation() {
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                if (this.entity.distance[this.board[i][j]] == 1) {
-                    this.score.match++;
-                }
-                if (this.score.horizon.headFlag) {
-                    if (this.entity.distance[this.board[i][j]] == 1) {
-                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.horizon.headFlag = 2;
-                    }
-                }
-                if (this.score.horizon.endFlag) {
-                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.horizon.endFlag = 2;
-                    }
-                }
-                if (this.score.vertical.headFlag) {
-                    if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.vertical.headFlag = 2;
-                    }
-                }
-                if (this.score.vertical.endFlag) {
-                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.vertical.endFlag = 2;
-                    }
-                }
-            }
-            switch (this.score.horizon.headFlag) {
-                case 1:
-                    this.score.horizon.headLine++;
-                    break;
-                case 2:
-                    this.score.horizon.headFlag = false;
-                    break;
-            }
-            switch (this.score.horizon.endFlag) {
-                case 1:
-                    this.score.horizon.endLine++;
-                    break;
-                case 2:
-                    this.score.horizon.endFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.headFlag) {
-                case 1:
-                    this.score.vertical.headLine++;
-                    break;
-                case 2:
-                    this.score.vertical.headFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.endFlag) {
-                case 1:
-                    this.score.vertical.endLine++;
-                    break;
-                case 2:
-                    this.score.vertical.endFlag = false;
-                    break;
-            }
-        }
-        this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
     }
 }
 

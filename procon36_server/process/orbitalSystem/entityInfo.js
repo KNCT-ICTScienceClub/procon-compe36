@@ -35,6 +35,10 @@ class EntityInfo {
      * @type {Score}
      */
     score;
+    /**
+     * アップデートが必要な値
+     * @type {boolean[]}
+     */
     updateFlag;
 
     /**
