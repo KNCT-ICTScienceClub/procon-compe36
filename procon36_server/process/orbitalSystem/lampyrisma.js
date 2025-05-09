@@ -1,7 +1,7 @@
 const Procon = require("../utility/proconUtility");
-const Garden = require("./garden");
+const { Garden, Root } = require("./garden");
 const EntityInfo = require("./entityInfo");
-const {LeafInfo} = require("./satellite");
+const { LeafInfo } = require("./satellite");
 
 /**
  * メインとなるクラス
@@ -61,15 +61,8 @@ class Lampyrisma extends Procon {
                 return Math.abs(element) * 2 + 1;
             }
         }));
-        //エンティティの情報を作る
-        this.entity = new EntityInfo();
-        this.entity.initialize(this.encodedBoard);
         //探索の根を作る
-        this.garden = new Garden(this.encodedBoard, this.entity, 0, this.width);
-        //とりあえずインデックスを[0,0,0,.....]で初期化する
-        this.garden.index = [...Array(depth).fill(0)];
-        //探索の木を指定された深さと幅で成長させる
-        this.garden.makeTrunk(depth);
+        this.garden = new Root(this.encodedBoard, this.depth, this.width);
     }
 
     /**
@@ -120,7 +113,7 @@ class Lampyrisma extends Procon {
             }
             //デバック用のループ防止に500ターンになると強制終了するようにしてる
             if (this.turn > 500) {
-                break;
+                //break;
             }
         }
     }

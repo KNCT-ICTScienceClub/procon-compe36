@@ -1,7 +1,7 @@
 const EntityInfo = require("./entityInfo");
 const { LeafInfo, Score, Order } = require("./satellite");
 
-class branchBase {
+class BranchBase {
     /**
      * 現在のボード
      * @type {number[][]}
@@ -18,117 +18,10 @@ class branchBase {
      */
     entity;
     /**
-     * 操作手順
-     * @type {Order}
-     */
-    order;
-    /**
      * スコア
      * @type {Score}
      */
     score;
-
-    /**
-     * scoreの数値を設定する関数
-     */
-    evaluation() {
-        for (let i = 0; i < this.size; i++) {
-            for (let j = 0; j < this.size; j++) {
-                if (this.score.horizon.headFlag) {
-                    if (this.entity.distance[this.board[i][j]] == 1) {
-                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.horizon.headFlag = 2;
-                    }
-                }
-                if (this.score.horizon.endFlag) {
-                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.horizon.endFlag = 2;
-                    }
-                }
-                if (this.score.vertical.headFlag) {
-                    if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.vertical.headFlag = 2;
-                    }
-                }
-                if (this.score.vertical.endFlag) {
-                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
-                    }
-                    else {
-                        this.score.vertical.endFlag = 2;
-                    }
-                }
-            }
-            switch (this.score.horizon.headFlag) {
-                case 1:
-                    this.score.horizon.headLine++;
-                    break;
-                case 2:
-                    this.score.horizon.headFlag = false;
-                    break;
-            }
-            switch (this.score.horizon.endFlag) {
-                case 1:
-                    this.score.horizon.endLine++;
-                    break;
-                case 2:
-                    this.score.horizon.endFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.headFlag) {
-                case 1:
-                    this.score.vertical.headLine++;
-                    break;
-                case 2:
-                    this.score.vertical.headFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.endFlag) {
-                case 1:
-                    this.score.vertical.endLine++;
-                    break;
-                case 2:
-                    this.score.vertical.endFlag = false;
-                    break;
-            }
-            if (!this.score.horizon.headFlag && !this.score.horizon.endFlag && !this.score.vertical.headFlag && !!this.score.vertical.endFlag) {
-                this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
-            }
-        }
-    }
-}
-
-class Twig extends branchBase {
-    /**
-     * @param {number[][]} board エンゲージ後のボード
-     * @param {EntityInfo} entity　エンゲージ後のボード
-     * @param {Order} order エンゲージ時の操作
-     * @param {number} match ペアの数
-     */
-    constructor(board, entity, order, match) {
-        super();
-        this.score = new Score();
-        this.score.match = match;
-        this.size = board.length;
-        this.board = board;
-        this.order = order;
-        this.entity = entity
-        this.evaluation();
-    }
-}
-
-/**
- * ノードとなるクラス
- */
-class Garden extends branchBase {
     /**
      * ノードの部分
      * @type {Garden[]}
@@ -140,28 +33,28 @@ class Garden extends branchBase {
      */
     width;
     /**
+     * 操作手順
+     * @type {Order}
+     */
+    order;
+    /**
      * このノードの現在地を示すインデックス
      * @type {number[]}
      */
-    index = [];
+    index;
 
     /**
-     * @param {number[][]} board エンゲージ後のボード
-     * @param {EntityInfo} entity　エンゲージ後のボード
-     * @param {Order} order エンゲージ時の操作
+     * @param {number[][]} board
      * @param {number} width
-     * @param {Score} score 
      */
-    constructor(board, entity, order, width, score = new Score()) {
-        super();
+    constructor(board, width) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
         this.entity = new EntityInfo();
-        this.entity.copyInfo(entity);
-        this.score.copyScore(score);
-        this.entity.score = this.score;
+        this.score = new Score();
         this.width = width;
-        this.order = order;
+        this.order;
+        this.index = [];
     }
 
     /**
@@ -235,7 +128,7 @@ class Garden extends branchBase {
                 delete suggest[i];
             }
         }
-        this.branch = this.forecast(suggest);
+        this.forecast(suggest);
         //インデックスを更新する
         //インデックスの左側をカットして末尾に新しく指定したインデックスを追加する
         this.branch.forEach((element, i) => element.index = index.slice(1).concat(i));
@@ -244,42 +137,18 @@ class Garden extends branchBase {
     /**
      * その手のスコアの予測を行い上位のスコアの枝を返す
      * @param {Order[]} suggest 
-     * @returns {Garden[]}
      */
     forecast(suggest) {
-        let twigs = Array(this.width).fill({ score: new Score() });
+        this.branch = Array(this.width).fill({ score: new Score() });
         suggest.forEach(element => {
-            //その操作に従ってエンゲージを行う
-            this.engage(element.position, element.size);
-            this.entity.updateFlag.forEach((flag, index) => {
-                if (flag) {
-                    this.entity.update(index)
-                }
-            });
             //操作したボードで候補を作る
-            let twig = new Twig(this.board, this.entity, element);
+            let twig = new Garden(this.board, this.entity, element, this.width, this.score.match);
             //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
             if (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound)) {
-                twigs = twigs.toSpliced(twigs.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
+                this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
             }
-            //逆の操作をしてボードを元に戻す
-            this.engage(element.position, element.size, true);
         });
-        //branchの要素の中に初期値の物があれば消し候補を枝にする
-        return twigs.filter(element => element?.size).map(element => {
-            //その操作に従ってエンゲージを行う
-            this.engage(element.order.position, element.order.size);
-            this.entity.updateFlag.forEach((flag, index) => {
-                if (flag) {
-                    this.entity.update(index)
-                }
-            });
-            //操作したボードで枝を作る
-            let branch = new Garden(this.board, this.entity, element.order, this.width, element.score);
-            //逆の操作をしてボードを元に戻す
-            this.engage(element.order.position, element.order.size, true);
-            return branch;
-        });
+        this.branch = this.branch.filter(element => element?.size);
     }
 
     /**
@@ -330,6 +199,7 @@ class Garden extends branchBase {
      * @param {number[]} position 園の左上の座標[x,y]
      * @param {number} size 園のサイズ
      * @param {boolean} reverse trueにすると左回転になる
+     * @returns {number} ペアの増加量
      */
     engage(position, size, reverse = false) {
         if ((position?.length ?? 0) < 2) {
@@ -342,6 +212,8 @@ class Garden extends branchBase {
             throw new RangeError("sizeは2以上の値を選択してください.\n問題箇所--->engage(board=<object>,position=...,size=" + size + "...");
         }
         let area = new Array(size).fill(0).map(() => [...Array(size)]);
+        let decodeArea = [];
+        let deltaMatch = 0;
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
@@ -350,24 +222,146 @@ class Garden extends branchBase {
                 else {
                     area[i][j] = this.board[j + position[1]][i + position[0]];
                 }
+                decodeArea.push(area[i][j] % 2 == 0 ? area[i][j] : area[i][j] - 1);
             }
         }
+        decodeArea = [...new Set(decodeArea)];
+        deltaMatch = decodeArea.reduce((previous, current) => previous + (this.entity.distance[current] == 1 ? 2 : 0), 0);
         area = area.map(array => array.reverse());
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 if (reverse) {
                     this.board[i + position[1]][j + position[0]] = area[j][i];
                     this.entity.position[area[j][i]] = [j + position[0], i + position[1]];
-                    this.entity.updateFlag[area[j][i]] = true;
                 }
                 else {
                     this.board[i + position[1]][j + position[0]] = area[i][j];
                     this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
-                    this.entity.updateFlag[area[i][j]] = true;
                 }
             }
         }
+        return decodeArea.reduce((previous, current) => {
+            this.entity.update(current);
+            return previous + (this.entity.distance[current] == 1 ? 2 : 0)
+        }, 0) - deltaMatch;
+    }
+    /**
+     * scoreの数値を設定する関数
+     */
+    evaluation() {
+        for (let i = 0; i < this.size; i++) {
+            for (let j = 0; j < this.size; j++) {
+                if (this.score.horizon.headFlag) {
+                    if (this.entity.distance[this.board[i][j]] == 1) {
+                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.horizon.headFlag = 2;
+                    }
+                }
+                if (this.score.horizon.endFlag) {
+                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
+                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.horizon.endFlag = 2;
+                    }
+                }
+                if (this.score.vertical.headFlag) {
+                    if (this.entity.distance[this.board[j][i]] == 1) {
+                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.vertical.headFlag = 2;
+                    }
+                }
+                if (this.score.vertical.endFlag) {
+                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
+                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
+                    }
+                    else {
+                        this.score.vertical.endFlag = 2;
+                    }
+                }
+            }
+            switch (this.score.horizon.headFlag) {
+                case 1:
+                    this.score.horizon.headLine++;
+                    break;
+                case 2:
+                    this.score.horizon.headFlag = false;
+                    break;
+            }
+            switch (this.score.horizon.endFlag) {
+                case 1:
+                    this.score.horizon.endLine++;
+                    break;
+                case 2:
+                    this.score.horizon.endFlag = false;
+                    break;
+            }
+            switch (this.score.vertical.headFlag) {
+                case 1:
+                    this.score.vertical.headLine++;
+                    break;
+                case 2:
+                    this.score.vertical.headFlag = false;
+                    break;
+            }
+            switch (this.score.vertical.endFlag) {
+                case 1:
+                    this.score.vertical.endLine++;
+                    break;
+                case 2:
+                    this.score.vertical.endFlag = false;
+                    break;
+            }
+            if (!this.score.horizon.headFlag && !this.score.horizon.endFlag && !this.score.vertical.headFlag && !this.score.vertical.endFlag) {
+                break;
+            }
+        }
+        this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
     }
 }
 
-module.exports = Garden;
+/**
+ * ノードとなるクラス
+ */
+class Garden extends BranchBase {
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {EntityInfo} entity　エンゲージ後のボード
+     * @param {Order} order エンゲージ時の操作
+     * @param {number} width
+     * @param {number} match 
+     */
+    constructor(board, entity, order, width, match = 0) {
+        super(board, width);
+        this.entity.copyInfo(entity);
+        this.score.match = match + this.engage(order.position, order.size);
+        this.evaluation();
+        this.entity.score = this.score;
+        this.order = order;
+    }
+}
+
+class Root extends BranchBase {
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {number} depth
+     * @param {number} width
+     */
+    constructor(board, depth, width) {
+        super(board, width);
+        this.entity.initialize(this.board, this.score);
+        this.evaluation();
+        //エンティティの情報を作る
+        //とりあえずインデックスを[0,0,0,.....]で初期化する
+        this.index = [...Array(depth).fill(0)];
+        //探索の木を指定された深さと幅で成長させる
+        this.makeTrunk(depth);
+    }
+}
+
+module.exports.Garden = Garden;
+module.exports.Root = Root;

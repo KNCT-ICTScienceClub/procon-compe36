@@ -44,8 +44,9 @@ class EntityInfo {
     /**
      * 渡されたボードに対しての情報を作成する
      * @param {number[][]} board
+     * @param {Score} score
      */
-    initialize(board) {
+    initialize(board, score) {
         this.size = board.length;
         this.position = new Array(this.size * this.size);
         this.vector = new Array(this.size * this.size);
@@ -61,9 +62,11 @@ class EntityInfo {
             for (let j = 0; j < this.size; j++) {
                 if (board[i][j] % 2 == 0) {
                     this.update(board[i][j]);
+                    score.match += (this.distance[board[i][j]] == 1 ? 2 : 0);
                 }
             }
         }
+        this.score = score;
     }
 
     /**
@@ -84,7 +87,7 @@ class EntityInfo {
      * @param {number} value 更新したいエンティティの値 
      */
     update(value) {
-        let pair = (value % 2 == 0 ? value + 1 : value - 1);
+        let pair = value++;
         this.vector[value] = [this.position[pair][0] - this.position[value][0], this.position[pair][1] - this.position[value][1]];
         this.vector[pair] = [-this.vector[value][0], -this.vector[value][1]];
         this.distance[value] = Math.abs(this.vector[value][0]) + Math.abs(this.vector[value][1]);
