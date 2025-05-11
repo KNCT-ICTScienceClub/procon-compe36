@@ -53,7 +53,6 @@ class BranchBase {
         this.entity = new EntityInfo();
         this.score = new Score();
         this.width = width;
-        this.order;
         this.index = [];
     }
 
@@ -198,10 +197,9 @@ class BranchBase {
      * 現在のボードを参照して「導き」を行う
      * @param {number[]} position 園の左上の座標[x,y]
      * @param {number} size 園のサイズ
-     * @param {boolean} reverse trueにすると左回転になる
      * @returns {number} ペアの増加量
      */
-    engage(position, size, reverse = false) {
+    engage(position, size) {
         if ((position?.length ?? 0) < 2) {
             throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
         }
@@ -216,12 +214,7 @@ class BranchBase {
         let deltaMatch = 0;
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
-                if (reverse) {
-                    area[i][j] = this.board[i + position[1]][j + position[0]];
-                }
-                else {
-                    area[i][j] = this.board[j + position[1]][i + position[0]];
-                }
+                area[i][j] = this.board[j + position[1]][i + position[0]];
                 decodeArea.push(area[i][j] % 2 == 0 ? area[i][j] : area[i][j] - 1);
             }
         }
@@ -230,14 +223,8 @@ class BranchBase {
         area = area.map(array => array.reverse());
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
-                if (reverse) {
-                    this.board[i + position[1]][j + position[0]] = area[j][i];
-                    this.entity.position[area[j][i]] = [j + position[0], i + position[1]];
-                }
-                else {
-                    this.board[i + position[1]][j + position[0]] = area[i][j];
-                    this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
-                }
+                this.board[i + position[1]][j + position[0]] = area[i][j];
+                this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
             }
         }
         return decodeArea.reduce((previous, current) => {
@@ -249,11 +236,12 @@ class BranchBase {
      * scoreの数値を設定する関数
      */
     evaluation() {
+        this.score.compound = this.score.match;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 if (this.score.horizon.headFlag) {
                     if (this.entity.distance[this.board[i][j]] == 1) {
-                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 1;
+                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 2;
                     }
                     else {
                         this.score.horizon.headFlag = 2;
@@ -261,7 +249,7 @@ class BranchBase {
                 }
                 if (this.score.horizon.endFlag) {
                     if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 1;
+                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 2;
                     }
                     else {
                         this.score.horizon.endFlag = 2;
@@ -269,7 +257,7 @@ class BranchBase {
                 }
                 if (this.score.vertical.headFlag) {
                     if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 1;
+                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 2;
                     }
                     else {
                         this.score.vertical.headFlag = 2;
@@ -277,7 +265,7 @@ class BranchBase {
                 }
                 if (this.score.vertical.endFlag) {
                     if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 1;
+                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 2;
                     }
                     else {
                         this.score.vertical.endFlag = 2;
@@ -319,8 +307,15 @@ class BranchBase {
             if (!this.score.horizon.headFlag && !this.score.horizon.endFlag && !this.score.vertical.headFlag && !this.score.vertical.endFlag) {
                 break;
             }
+            if (this.size == this.score.horizon.headLine + this.score.horizon.endLine && this.size == this.score.vertical.headLine + this.score.vertical.endLine) {
+                break;
+            }
         }
-        this.score.compound = this.score.match + this.score.horizon.head * 3 + this.score.horizon.end * 3 + this.score.vertical.head * 3 + this.score.vertical.end * 3;
+        this.score.compound += this.entity.distance[this.board[this.score.horizon.headLine][this.score.vertical.headLine]] == 1 ? 3 : 0;
+        this.score.compound += this.entity.distance[this.board[this.score.horizon.headLine][this.size - this.score.vertical.endLine - 1]] == 1 ? 3 : 0;
+        this.score.compound += this.entity.distance[this.board[this.size - this.score.horizon.endLine - 1][this.score.vertical.headLine]] == 1 ? 3 : 0;
+        this.score.compound += this.entity.distance[this.board[this.size - this.score.horizon.endLine - 1][this.size - this.score.vertical.endLine - 1]] == 1 ? 3 : 0;
+        this.score.compound += this.score.horizon.head + this.score.horizon.end + this.score.vertical.head + this.score.vertical.end;
     }
 }
 

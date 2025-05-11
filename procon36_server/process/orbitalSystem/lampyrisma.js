@@ -112,8 +112,8 @@ class Lampyrisma extends Procon {
                 break;
             }
             //デバック用のループ防止に500ターンになると強制終了するようにしてる
-            if (this.turn > 500) {
-                //break;
+            if (this.turn > 800) {
+                break;
             }
         }
     }
