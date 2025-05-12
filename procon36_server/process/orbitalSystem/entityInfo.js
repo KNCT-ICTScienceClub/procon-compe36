@@ -142,11 +142,22 @@ class EntityInfo {
     }
 
     /**
+     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
+     * @param {number} value 動かすエンティティの値
+     * @param {number[]} vector
+     * @param {number} direction
+     * @returns {Order}
+     */
+    adjusting(value, vector,distance, direction) {
+        return this.entityMove(new Order(this.position[value], distance, 2), vector, direction);
+    }
+
+    /**
      * その値のエンティティがペアになっている状態ならば、そのペアの塊をボードの端の方に寄せる操作を返す関数
      * @param {number} value エンティティの値 
      * @returns {Order}
      */
-    adjusting(value) {
+    oldAdjusting(value) {
         //全ての方向で端に寄せたときのサイズを計算する
         let aim = [
             { direction: 2, size: this.size - this.score.vertical.end.line - this.position[value][0] },

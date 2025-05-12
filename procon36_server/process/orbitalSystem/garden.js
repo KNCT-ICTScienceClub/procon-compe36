@@ -75,7 +75,7 @@ class BranchBase {
                     */
                     //スコアが現在の葉よりも高かった場合葉を上書きする
                     //下のspliceはleaves=[new LeafInfo()]とほとんど等しいが左の場合だと非破壊であるためメソッドの外に値を渡せない
-                    leaves.splice(0,leaves.length,new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
+                    leaves.splice(0, leaves.length, new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
                 }
                 else if (this.branch[0].score.compound == leaves[0].score) {
                     //スコアが同じであった場合葉に情報を追記する
@@ -95,7 +95,7 @@ class BranchBase {
      */
     makeTrunk(depth) {
         if (depth != 0) {
-            this.extendBranch(this.index, false);
+            this.extendBranch(this.index);
             this.branch.forEach(element => element.makeTrunk(depth - 1));
         }
     }
@@ -120,12 +120,10 @@ class BranchBase {
      * @param {number[]} index 
      * @param {boolean} adjust 
      */
-    extendBranch(index, adjust = true) {
+    extendBranch(index) {
         let suggest = [];
         this.matchSuggest(suggest);
-        if (adjust) {
-            this.adjustSuggest(suggest);
-        }
+        this.adjustSuggest(suggest);
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
@@ -182,12 +180,25 @@ class BranchBase {
      * @param {Order[]} suggest 列挙した操作を格納した配列
      */
     adjustSuggest(suggest) {
+        for (let i = this.score.vertical.head.line; i < this.size - this.score.vertical.end.line - 1; i++) {
+            //ペアになっているエンティティに対してサジェストを出す
+            for (let j = 2; j <= i - this.score.vertical.head.line + 2; j++) {
+                if (this.entity.distance[this.board.at(this.score.horizon.head.line).at(i + 1)] != 1) {
+                    suggest.push(this.entity.adjusting(this.board.at(this.score.horizon.head.line).at(i + 1), j, [0, j], 3));
+                }
+                if (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(i)] != 1) {
+                    suggest.push(this.entity.adjusting(this.board.at(-this.score.horizon.end.line - 1).at(i), j, [0, -j], 7));
+                }
+            }
+        }
         //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.head.line + 1; i < this.size - this.score.horizon.end.line; i++) {
-            for (let j = this.score.vertical.head.line + 1; j < this.size - this.score.vertical.end.line; j++) {
-                //ペアになっているエンティティに対してサジェストを出す
-                if (this.entity.distance[this.board[i][j]] == 1) {
-                    suggest.push(this.entity.adjusting(this.board[i][j]));
+        for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line - 1; i++) {
+            for (let j = 2; j <= i - this.score.horizon.head.line + 2; j++) {
+                if (this.entity.distance[this.board.at(-i + this.score.horizon.head.line - this.score.horizon.end.line - 2).at(this.score.vertical.head.line)] != 1) {
+                    suggest.push(this.entity.adjusting(this.board.at(-i + this.score.horizon.head.line - this.score.horizon.end.line - 2).at(this.score.vertical.head.line), j, [j, 0], 2));
+                }
+                if (this.entity.distance[this.board.at(i + 1).at(-this.score.vertical.end.line - 1)] != 1) {
+                    suggest.push(this.entity.adjusting(this.board.at(i + 1).at(-this.score.vertical.end.line - 1), j, [-j, 0], 7));
                 }
             }
         }
