@@ -58,7 +58,7 @@ class BranchBase {
 
     /**
      * 葉の情報を抜き出し剪定を行う
-     * @param {LeafInfo} leaves 葉の情報
+     * @param {LeafInfo[]} leaves 葉の情報
      * @param {number} depth 深さ
      */
     //最初に指定したdepthの回数だけ下の階層へ潜る
@@ -66,14 +66,21 @@ class BranchBase {
         //指定した深さまで潜ると実行される
         if (depth == 1) {
             //葉の情報を書き込む
-            /*
-            三項演算子
-            完成盤面であった場合はそのノードに到達するまでの全てのインデックスが渡される
-            そうでない時はその葉が根に直接繋がっているノードのどれに属しているかを示すインデックスを渡す
-            */
-            //総合的なスコアを渡す
             if (this.branch.length != 0) {
-                leaves.push(new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
+                if (this.branch[0].score.compound > leaves[0].score) {
+                    /*
+                    三項演算子
+                    完成盤面であった場合はそのノードに到達するまでの全てのインデックスが渡される
+                    そうでない時はその葉が根に直接繋がっているノードのどれに属しているかを示すインデックスを渡す
+                    */
+                    //スコアが現在の葉よりも高かった場合葉を上書きする
+                    //下のspliceはleaves=[new LeafInfo()]とほとんど等しいが左の場合だと非破壊であるためメソッドの外に値を渡せない
+                    leaves.splice(0,leaves.length,new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
+                }
+                else if (this.branch[0].score.compound == leaves[0].score) {
+                    //スコアが同じであった場合葉に情報を追記する
+                    leaves.push(new LeafInfo(this.branch[0].index[0], this.branch[0].score.compound));
+                }
             }
         }
         //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
@@ -153,18 +160,11 @@ class BranchBase {
     /**
      * 次ターンのみに着目して、ペアを生成できる操作を列挙する関数
      * @param {Order[]} suggest 列挙した操作を格納した配列
-     * @param {number} limit 揃ってないところから+limitの数値までの幅の枠を作ってそこの地点についてだけサジェストを出す
      */
-    matchSuggest(suggest, limit = this.size) {
+    matchSuggest(suggest) {
         //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.headLine; i < this.size - this.score.horizon.endLine; i++) {
-            for (let j = this.score.vertical.headLine; j < this.size - this.score.vertical.endLine; j++) {
-                //この条件式を発動させると枠のような形で位置が指定される
-                if (limit <= i && limit == j) {
-                    if (this.size - this.score.horizon.headLine - this.score.horizon.endLine - limit - i > 0) {
-                        j += this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 > 0 ? this.size - this.score.vertical.headLine - this.score.vertical.endLine - limit * 2 : 0;
-                    }
-                }
+        for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
+            for (let j = this.score.vertical.head.line; j < this.size - this.score.vertical.end.line; j++) {
                 //ペアになっていないエンティティに対してサジェストを出す
                 if (this.entity.distance[this.board[i][j]] != 1) {
                     let order = this.entity.matching(this.board[i][j]);
@@ -183,8 +183,8 @@ class BranchBase {
      */
     adjustSuggest(suggest) {
         //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.headLine + 1; i < this.size - this.score.horizon.endLine - 1; i++) {
-            for (let j = this.score.vertical.headLine + 1; j < this.size - this.score.vertical.endLine - 1; j++) {
+        for (let i = this.score.horizon.head.line + 1; i < this.size - this.score.horizon.end.line; i++) {
+            for (let j = this.score.vertical.head.line + 1; j < this.size - this.score.vertical.end.line; j++) {
                 //ペアになっているエンティティに対してサジェストを出す
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     suggest.push(this.entity.adjusting(this.board[i][j]));
@@ -200,15 +200,6 @@ class BranchBase {
      * @returns {number} ペアの増加量
      */
     engage(position, size) {
-        if ((position?.length ?? 0) < 2) {
-            throw new RangeError("positionの要素数は2つ必要です.\n問題箇所--->engage(board=<object>,position=" + position + "...");
-        }
-        else if (position[0] < 0 || this.size < position[0] + size || position[1] < 0 || this.size < position[1] + size) {
-            throw new RangeError("選択範囲がboardからはみ出しています.\n問題箇所--->engage(board=<object>,position=" + position + ",size=" + size + "...");
-        }
-        else if (size < 2) {
-            throw new RangeError("sizeは2以上の値を選択してください.\n問題箇所--->engage(board=<object>,position=...,size=" + size + "...");
-        }
         let area = new Array(size).fill(0).map(() => [...Array(size)]);
         let decodeArea = [];
         let deltaMatch = 0;
@@ -236,86 +227,48 @@ class BranchBase {
      * scoreの数値を設定する関数
      */
     evaluation() {
+        const addScore = (index, line, side) => {
+            if (line.flag && line.flag[side]) {
+                if (this.entity.distance[this.board.at(index[0]).at(index[1])] == 1) {
+                    line.value++;
+                }
+                else {
+                    line.flag[side] = false;
+                }
+            }
+        }
+        const setLine = (line) => {
+            if (line.flag[0]) {
+                line.line++;
+            }
+            else {
+                line.flag = false;
+            }
+        }
         this.score.compound = this.score.match;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
-                if (this.score.horizon.headFlag) {
-                    if (this.entity.distance[this.board[i][j]] == 1) {
-                        this.score.horizon.head += this.score.horizon.headFlag == 1 ? 3 : 2;
-                    }
-                    else {
-                        this.score.horizon.headFlag = 2;
-                    }
-                }
-                if (this.score.horizon.endFlag) {
-                    if (this.entity.distance[this.board[this.size - i - 1][this.size - j - 1]] == 1) {
-                        this.score.horizon.end += this.score.horizon.endFlag == 1 ? 3 : 2;
-                    }
-                    else {
-                        this.score.horizon.endFlag = 2;
-                    }
-                }
-                if (this.score.vertical.headFlag) {
-                    if (this.entity.distance[this.board[j][i]] == 1) {
-                        this.score.vertical.head += this.score.vertical.headFlag == 1 ? 3 : 2;
-                    }
-                    else {
-                        this.score.vertical.headFlag = 2;
-                    }
-                }
-                if (this.score.vertical.endFlag) {
-                    if (this.entity.distance[this.board[this.size - j - 1][this.size - i - 1]] == 1) {
-                        this.score.vertical.end += this.score.vertical.endFlag == 1 ? 3 : 2;
-                    }
-                    else {
-                        this.score.vertical.endFlag = 2;
-                    }
-                }
+                addScore([i, j], this.score.horizon.head, 0);
+                addScore([i, -j - 1], this.score.horizon.head, 1);
+                addScore([-i - 1, j], this.score.horizon.end, 0);
+                addScore([-i - 1, -j - 1], this.score.horizon.end, 1);
+                addScore([j, i], this.score.vertical.head, 0);
+                addScore([-j - 1, i], this.score.vertical.head, 1);
+                addScore([j, -i - 1], this.score.vertical.end, 0);
+                addScore([-j - 1, -i - 1], this.score.vertical.end, 1);
             }
-            switch (this.score.horizon.headFlag) {
-                case 1:
-                    this.score.horizon.headLine++;
-                    break;
-                case 2:
-                    this.score.horizon.headFlag = false;
-                    break;
-            }
-            switch (this.score.horizon.endFlag) {
-                case 1:
-                    this.score.horizon.endLine++;
-                    break;
-                case 2:
-                    this.score.horizon.endFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.headFlag) {
-                case 1:
-                    this.score.vertical.headLine++;
-                    break;
-                case 2:
-                    this.score.vertical.headFlag = false;
-                    break;
-            }
-            switch (this.score.vertical.endFlag) {
-                case 1:
-                    this.score.vertical.endLine++;
-                    break;
-                case 2:
-                    this.score.vertical.endFlag = false;
-                    break;
-            }
-            if (!this.score.horizon.headFlag && !this.score.horizon.endFlag && !this.score.vertical.headFlag && !this.score.vertical.endFlag) {
+            setLine(this.score.horizon.head);
+            setLine(this.score.horizon.end);
+            setLine(this.score.vertical.head);
+            setLine(this.score.vertical.end);
+            if (!this.score.horizon.head.flag && !this.score.horizon.end.flag && !this.score.vertical.head.flag && !this.score.vertical.end.flag) {
                 break;
             }
-            if (this.size == this.score.horizon.headLine + this.score.horizon.endLine && this.size == this.score.vertical.headLine + this.score.vertical.endLine) {
+            if (this.size == this.score.horizon.head.line + this.score.horizon.end.line && this.size == this.score.vertical.head.line + this.score.vertical.end.line) {
                 break;
             }
         }
-        this.score.compound += this.entity.distance[this.board[this.score.horizon.headLine][this.score.vertical.headLine]] == 1 ? 3 : 0;
-        this.score.compound += this.entity.distance[this.board[this.score.horizon.headLine][this.size - this.score.vertical.endLine - 1]] == 1 ? 3 : 0;
-        this.score.compound += this.entity.distance[this.board[this.size - this.score.horizon.endLine - 1][this.score.vertical.headLine]] == 1 ? 3 : 0;
-        this.score.compound += this.entity.distance[this.board[this.size - this.score.horizon.endLine - 1][this.size - this.score.vertical.endLine - 1]] == 1 ? 3 : 0;
-        this.score.compound += this.score.horizon.head + this.score.horizon.end + this.score.vertical.head + this.score.vertical.end;
+        this.score.compound += this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
     }
 }
 

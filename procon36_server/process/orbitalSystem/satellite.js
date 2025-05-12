@@ -23,40 +23,38 @@ class LeafInfo {
     }
 }
 
+class LineSide {
+    /**
+     * 列の評価値
+     * @type {number}
+     */
+    value = 0;
+    /**
+     * 列がどれだけ連続で完璧に揃っていたかカウントする変数
+     * @type {number}
+     */
+    line = 0;
+    /**
+     * 列の連続性が失われたときに変化するフラグ
+     * @type {number}
+     */
+    flag = [true,true];
+}
+
 /**
  * ボードの外側がどれくらい綺麗に揃っているかについてのスコアを記録するクラス
  */
 class Line {
     /**
-     * 先端部分の列の評価値
-     * @type {number}
+     * 先端部分の列の評価
+     * @type {LineSide}
      */
-    head = 0;
+    head = new LineSide();
     /**
-     * 先端部分の列がどれだけ連続で完璧に揃っていたかカウントすうる変数
-     * @type {number}
+     * 終端部分の列の評価
+     * @type {LineSide}
      */
-    headLine = 0;
-    /**
-     * 先端部分の列の連続性が失われたときに変化する変数
-     * @type {number}
-     */
-    headFlag = 1;
-    /**
-     * 終端部分の列の評価値
-     * @type {number}
-     */
-    end = 0;
-    /**
-     * 終端部分の列がどれだけ連続で完璧に揃っていたかカウントすうる変数
-     * @type {number}
-     */
-    endLine = 0;
-    /**
-     * 終端部分の列の連続性が失われたときに変化する変数
-     * @type {number}
-     */
-    endFlag = 1;
+    end = new LineSide();
 }
 
 /**

@@ -90,14 +90,15 @@ class EntityInfo {
     }
 
     /**
-     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
-     * @param {number} value 動かすエンティティの値
+     * 指定した場所をベクトル方向に移動させる
+     * @param {Order} order 
+     * @param {number[]} vector 
+     * @param {number} direction 
      * @returns {Order}
      */
-    matching(value) {
-        let order = new Order(this.position[value], this.distance[value], 1);
+    entityMove(order, vector, direction) {
         //このままの状態ではペアのエンティティがあった位置にエンティティが移動するため方向によって一つ位置をずらす
-        switch (this.direction[value]) {
+        switch (direction) {
             case 3:
             case 15:
                 order.position[0] += 1;
@@ -118,17 +119,26 @@ class EntityInfo {
         //下方向は左に移動
         //左方向は左上に移動
         //上方向は上に移動
-        if (this.direction[value] % 3 == 0) {
-            order.position[0] -= this.vector[value][1];
+        if (direction % 3 == 0) {
+            order.position[0] -= vector[1];
         }
-        if (this.direction[value] % 5 == 0) {
-            order.position[0] += this.vector[value][0];
-            order.position[1] += this.vector[value][0];
+        if (direction % 5 == 0) {
+            order.position[0] += vector[0];
+            order.position[1] += vector[0];
         }
-        if (this.direction[value] % 7 == 0) {
-            order.position[1] += this.vector[value][1];
+        if (direction % 7 == 0) {
+            order.position[1] += vector[1];
         }
         return order;
+    }
+
+    /**
+     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
+     * @param {number} value 動かすエンティティの値
+     * @returns {Order}
+     */
+    matching(value) {
+        return this.entityMove(new Order(this.position[value], this.distance[value], 1), this.vector[value], this.direction[value]);
     }
 
     /**
@@ -139,10 +149,10 @@ class EntityInfo {
     adjusting(value) {
         //全ての方向で端に寄せたときのサイズを計算する
         let aim = [
-            { direction: 2, size: this.size - this.score.vertical.endLine - this.position[value][0] },
-            { direction: 3, size: this.size - this.score.horizon.endLine - this.position[value][1] },
-            { direction: 5, size: this.position[value][0] - this.score.vertical.headLine + 1 },
-            { direction: 7, size: this.position[value][1] - this.score.horizon.headLine + 1 }
+            { direction: 2, size: this.size - this.score.vertical.end.line - this.position[value][0] },
+            { direction: 3, size: this.size - this.score.horizon.end.line - this.position[value][1] },
+            { direction: 5, size: this.position[value][0] - this.score.vertical.head.line + 1 },
+            { direction: 7, size: this.position[value][1] - this.score.horizon.head.line + 1 }
         ];
         //サイズと方向によって位置を計算し操作を返す
         const setOrder = (aim) => {

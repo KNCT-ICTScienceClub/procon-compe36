@@ -74,20 +74,16 @@ class Lampyrisma extends Procon {
             /**
              * @type {LeafInfo[]} 全ての葉の情報
              */
-            let leaves = [];
+            let leaves = [new LeafInfo(0, 0)];
             //参照渡しで直接書き換える
             this.garden.pruning(leaves, this.depth);
             //スコアを高い順に並び替える
-            leaves.sort((a, b) => b.score - a.score);
             let index = [];
-            //console.log(leaves);
             //インデックスが配列かどうか調べる
             if (!leaves[0].index.length) {
                 let duplicate = [...Array(this.width).fill(0)];
                 //スコアが最高値の葉が複数あったときには数が多い方を選択する
-                for (let i = 0; leaves[0].score == leaves[i].score && i < leaves.length - 1; i++) {
-                    duplicate[leaves[i].index]++;
-                }
+                leaves.forEach(leaf => duplicate[leaf.index]++);
                 //スコアが良い葉があるノードを選択してそれ以外を削除することでノードを進める
                 index = [duplicate.indexOf(Math.max(...duplicate))];
             }
@@ -101,7 +97,7 @@ class Lampyrisma extends Procon {
                 this.garden = this.garden.branch[element];
                 //ターンを追加して操作を確定する
                 this.turnAdd(this.garden.order.position, this.garden.order.size);
-                console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",左端:" + this.garden.score.vertical.head + ",右端:" + this.garden.score.vertical.end + ",上端:" + this.garden.score.horizon.head + ",下端:" + this.garden.score.horizon.end);
+                console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",左端:" + this.garden.score.vertical.head.value + ",右端:" + this.garden.score.vertical.end.value + ",上端:" + this.garden.score.horizon.head.value + ",下端:" + this.garden.score.horizon.end.value);
             });
             //現在の盤面が完成しているか調べる
             if (this.garden.score.match != this.size * this.size) {
