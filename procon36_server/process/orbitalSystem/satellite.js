@@ -38,7 +38,7 @@ class LineSide {
      * 列の連続性が失われたときに変化するフラグ
      * @type {number}
      */
-    flag = [true,true];
+    flag = [true, true];
 }
 
 /**

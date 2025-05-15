@@ -169,7 +169,7 @@ let test=[];
         test.push(element);
     }
    })
-let lampyrisma = new Lampyrisma(24, 5, 3);
+let lampyrisma = new Lampyrisma(24, 4, 3);
 lampyrisma.makeProblemFile();
 lampyrisma.allLink();
 lampyrisma.makeAnswerFile();

@@ -122,8 +122,8 @@ class BranchBase {
      */
     extendBranch(index) {
         let suggest = [];
-        this.matchSuggest(suggest);
-        this.adjustSuggest(suggest);
+        this.matchSuggest(suggest,5);
+        this.removalSuggest(suggest);
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
@@ -146,7 +146,7 @@ class BranchBase {
         this.branch = Array(this.width).fill({ score: new Score() });
         suggest.forEach(element => {
             //操作したボードで候補を作る
-            let twig = new Garden(this.board, this.entity, element, this.width, this.score.match);
+            let twig = new Garden(this.board, this.entity, element, this.width);
             //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
             if (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound)) {
                 this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
@@ -158,14 +158,21 @@ class BranchBase {
     /**
      * 次ターンのみに着目して、ペアを生成できる操作を列挙する関数
      * @param {Order[]} suggest 列挙した操作を格納した配列
+     * @param {number} limit 枠の太さ
      */
-    matchSuggest(suggest) {
+    matchSuggest(suggest, limit) {
         //全て揃っている列は操作する必要がないので無視してfor文を回す
         for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
             for (let j = this.score.vertical.head.line; j < this.size - this.score.vertical.end.line; j++) {
+                //この条件式を発動させると枠のような形で位置が指定される
+                if (limit <= i && limit == j) {
+                    if (this.size - this.score.horizon.head.line - this.score.horizon.end.line - limit - i > 0) {
+                        j += this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 > 0 ? this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 : 0;
+                    }
+                }
                 //ペアになっていないエンティティに対してサジェストを出す
                 if (this.entity.distance[this.board[i][j]] != 1) {
-                    let order = this.entity.matching(this.board[i][j]);
+                    let order = this.entity.matching(this.board[i][j] % 2 == 0 ? this.board[i][j] + 1 : this.board[i][j] - 1);
                     //位置によっては指定した場所がボードを飛び出すことがあるので条件式でふるいにかける
                     if (0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
                         suggest.push(order);
@@ -180,25 +187,39 @@ class BranchBase {
      * @param {Order[]} suggest 列挙した操作を格納した配列
      */
     adjustSuggest(suggest) {
-        for (let i = this.score.vertical.head.line; i < this.size - this.score.vertical.end.line - 1; i++) {
-            //ペアになっているエンティティに対してサジェストを出す
-            for (let j = 2; j <= i - this.score.vertical.head.line + 2; j++) {
-                if (this.entity.distance[this.board.at(this.score.horizon.head.line).at(i + 1)] != 1) {
-                    suggest.push(this.entity.adjusting(this.board.at(this.score.horizon.head.line).at(i + 1), j, [0, j], 3));
-                }
-                if (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(i)] != 1) {
-                    suggest.push(this.entity.adjusting(this.board.at(-this.score.horizon.end.line - 1).at(i), j, [0, -j], 7));
+        //全て揃っている列は操作する必要がないので無視してfor文を回す
+        for (let i = this.score.horizon.head.line + 1; i < this.size - this.score.horizon.end.line; i++) {
+            for (let j = this.score.vertical.head.line + 1; j < this.size - this.score.vertical.end.line; j++) {
+                //ペアになっているエンティティに対してサジェストを出す
+                if (this.entity.distance[this.board[i][j]] == 1) {
+                    suggest.push(this.entity.adjusting(this.board[i][j]));
                 }
             }
         }
-        //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line - 1; i++) {
-            for (let j = 2; j <= i - this.score.horizon.head.line + 2; j++) {
-                if (this.entity.distance[this.board.at(-i + this.score.horizon.head.line - this.score.horizon.end.line - 2).at(this.score.vertical.head.line)] != 1) {
-                    suggest.push(this.entity.adjusting(this.board.at(-i + this.score.horizon.head.line - this.score.horizon.end.line - 2).at(this.score.vertical.head.line), j, [j, 0], 2));
+    }
+
+    /**
+     * ペアになっていない要素をボードの端から排除する操作を列挙する関数
+     * @param {Order[]} suggest 列挙した操作を格納した配列
+     */
+    removalSuggest(suggest) {
+        for (let i = 0; i < this.size - this.score.vertical.head.line - this.score.vertical.end.line - 1; i++) {
+            for (let j = 2; j <= i + 2 && j < this.size - this.score.horizon.head.line - this.score.horizon.end.line; j++) {
+                if (this.entity.distance[this.board[this.score.horizon.head.line][i + 1 + this.score.vertical.head.line]] != 1) {
+                    suggest.push(this.entity.setOrder([i + 1 + this.score.vertical.head.line, this.score.horizon.head.line], 3, j));
                 }
-                if (this.entity.distance[this.board.at(i + 1).at(-this.score.vertical.end.line - 1)] != 1) {
-                    suggest.push(this.entity.adjusting(this.board.at(i + 1).at(-this.score.vertical.end.line - 1), j, [-j, 0], 7));
+                if (this.entity.distance[this.board[this.size - this.score.horizon.end.line - 1][this.size - i - this.score.vertical.end.line - 2]] != 1) {
+                    suggest.push(this.entity.setOrder([this.size - i - this.score.vertical.end.line - 2, this.size - this.score.horizon.end.line - 1], 7, j));
+                }
+            }
+        }
+        for (let i = 0; i < this.size - this.score.horizon.head.line - this.score.horizon.end.line - 1; i++) {
+            for (let j = 2; j <= i + 2 && j < this.size - this.score.vertical.head.line - this.score.vertical.end.line; j++) {
+                if (this.entity.distance[this.board[i + 1 + this.score.horizon.head.line][this.size - this.score.vertical.end.line - 1]] != 1) {
+                    suggest.push(this.entity.setOrder([this.size - this.score.vertical.end.line - 1, i + 1 + this.score.horizon.head.line], 5, j));
+                }
+                if (this.entity.distance[this.board[this.size - i - this.score.horizon.end.line - 2][this.score.vertical.head.line]] != 1) {
+                    suggest.push(this.entity.setOrder([this.score.vertical.head.line, this.size - i - this.score.horizon.end.line - 2], 2, j));
                 }
             }
         }
@@ -208,31 +229,22 @@ class BranchBase {
      * 現在のボードを参照して「導き」を行う
      * @param {number[]} position 園の左上の座標[x,y]
      * @param {number} size 園のサイズ
-     * @returns {number} ペアの増加量
      */
     engage(position, size) {
         let area = new Array(size).fill(0).map(() => [...Array(size)]);
-        let decodeArea = [];
-        let deltaMatch = 0;
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 area[i][j] = this.board[j + position[1]][i + position[0]];
-                decodeArea.push(area[i][j] % 2 == 0 ? area[i][j] : area[i][j] - 1);
             }
         }
-        decodeArea = [...new Set(decodeArea)];
-        deltaMatch = decodeArea.reduce((previous, current) => previous + (this.entity.distance[current] == 1 ? 2 : 0), 0);
         area = area.map(array => array.reverse());
         for (let i = 0; i < size; i++) {
             for (let j = 0; j < size; j++) {
                 this.board[i + position[1]][j + position[0]] = area[i][j];
                 this.entity.position[area[i][j]] = [j + position[0], i + position[1]];
+                this.entity.update(area[i][j]);
             }
         }
-        return decodeArea.reduce((previous, current) => {
-            this.entity.update(current);
-            return previous + (this.entity.distance[current] == 1 ? 2 : 0)
-        }, 0) - deltaMatch;
     }
     /**
      * scoreの数値を設定する関数
@@ -279,7 +291,24 @@ class BranchBase {
                 break;
             }
         }
-        this.score.compound += this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
+        this.score.match=this.size*this.size-(this.size-this.score.vertical.head.line-this.score.vertical.end.line)*(this.size-this.score.horizon.head.line-this.score.horizon.end.line);
+        let limit = 5;
+        //この条件式を発動させると枠のような形で位置が指定される
+        //全て揃っている列は操作する必要がないので無視してfor文を回す
+        for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
+            for (let j = this.score.vertical.head.line; j < this.size - this.score.vertical.end.line; j++) {
+                //この条件式を発動させると枠のような形で位置が指定される
+                if (limit <= i && limit == j) {
+                    if (this.size - this.score.horizon.head.line - this.score.horizon.end.line - limit - i > 0) {
+                        j += this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 > 0 ? this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 : 0;
+                    }
+                }
+                if (this.entity.distance[this.board[i][j]] == 1) {
+                    this.score.match++;
+                }
+            }
+        }
+        this.score.compound += this.score.match + this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
     }
 }
 
@@ -292,12 +321,11 @@ class Garden extends BranchBase {
      * @param {EntityInfo} entity　エンゲージ後のボード
      * @param {Order} order エンゲージ時の操作
      * @param {number} width
-     * @param {number} match 
      */
-    constructor(board, entity, order, width, match = 0) {
+    constructor(board, entity, order, width) {
         super(board, width);
         this.entity.copyInfo(entity);
-        this.score.match = match + this.engage(order.position, order.size);
+        this.engage(order.position, order.size);
         this.evaluation();
         this.entity.score = this.score;
         this.order = order;

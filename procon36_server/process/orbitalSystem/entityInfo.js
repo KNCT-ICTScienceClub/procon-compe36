@@ -80,7 +80,7 @@ class EntityInfo {
      * @param {number} value 更新したいエンティティの値 
      */
     update(value) {
-        let pair = value++;
+        let pair = value % 2 == 0 ? value + 1 : value - 1;
         this.vector[value] = [this.position[pair][0] - this.position[value][0], this.position[pair][1] - this.position[value][1]];
         this.vector[pair] = [-this.vector[value][0], -this.vector[value][1]];
         this.distance[value] = Math.abs(this.vector[value][0]) + Math.abs(this.vector[value][1]);
@@ -90,15 +90,14 @@ class EntityInfo {
     }
 
     /**
-     * 指定した場所をベクトル方向に移動させる
-     * @param {Order} order 
-     * @param {number[]} vector 
-     * @param {number} direction 
+     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
+     * @param {number} value 動かすエンティティの値
      * @returns {Order}
      */
-    entityMove(order, vector, direction) {
+    matching(value) {
+        let order = new Order(this.position[value], this.distance[value], 1);
         //このままの状態ではペアのエンティティがあった位置にエンティティが移動するため方向によって一つ位置をずらす
-        switch (direction) {
+        switch (this.direction[value]) {
             case 3:
             case 15:
                 order.position[0] += 1;
@@ -119,37 +118,37 @@ class EntityInfo {
         //下方向は左に移動
         //左方向は左上に移動
         //上方向は上に移動
-        if (direction % 3 == 0) {
-            order.position[0] -= vector[1];
+        if (this.direction[value] % 3 == 0) {
+            order.position[0] -= this.vector[value][1];
         }
-        if (direction % 5 == 0) {
-            order.position[0] += vector[0];
-            order.position[1] += vector[0];
+        if (this.direction[value] % 5 == 0) {
+            order.position[0] += this.vector[value][0];
+            order.position[1] += this.vector[value][0];
         }
-        if (direction % 7 == 0) {
-            order.position[1] += vector[1];
+        if (this.direction[value] % 7 == 0) {
+            order.position[1] += this.vector[value][1];
         }
         return order;
     }
 
     /**
-     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
-     * @param {number} value 動かすエンティティの値
+     * //サイズと方向によって位置を計算し操作を返す
+     * @param {number[]} position 
+     * @param {number} direction 
+     * @param {number} size 
      * @returns {Order}
      */
-    matching(value) {
-        return this.entityMove(new Order(this.position[value], this.distance[value], 1), this.vector[value], this.direction[value]);
-    }
-
-    /**
-     * その値のエンティティをペアとなるエンティティの位置まで動かすことでペアを完成できる操作を返す関数
-     * @param {number} value 動かすエンティティの値
-     * @param {number[]} vector
-     * @param {number} direction
-     * @returns {Order}
-     */
-    adjusting(value, vector,distance, direction) {
-        return this.entityMove(new Order(this.position[value], distance, 2), vector, direction);
+    setOrder(position, direction, size) {
+        switch (direction) {
+            case 2:
+                return new Order(position, size, 2);
+            case 3:
+                return new Order([position[0] - size + 1, position[1]], size, 2);
+            case 5:
+                return new Order([position[0] - size + 1, position[1] - size + 1], size, 2);
+            case 7:
+                return new Order([position[0], position[1] - size + 1], size, 2);
+        }
     }
 
     /**
@@ -157,7 +156,7 @@ class EntityInfo {
      * @param {number} value エンティティの値 
      * @returns {Order}
      */
-    oldAdjusting(value) {
+    adjusting(value) {
         //全ての方向で端に寄せたときのサイズを計算する
         let aim = [
             { direction: 2, size: this.size - this.score.vertical.end.line - this.position[value][0] },
@@ -165,19 +164,6 @@ class EntityInfo {
             { direction: 5, size: this.position[value][0] - this.score.vertical.head.line + 1 },
             { direction: 7, size: this.position[value][1] - this.score.horizon.head.line + 1 }
         ];
-        //サイズと方向によって位置を計算し操作を返す
-        const setOrder = (aim) => {
-            switch (aim.direction) {
-                case 2:
-                    return new Order(this.position[value], aim.size, 2);
-                case 3:
-                    return new Order([this.position[value][0] - aim.size + 1, this.position[value][1]], aim.size, 2);
-                case 5:
-                    return new Order([this.position[value][0] - aim.size + 1, this.position[value][1] - aim.size + 1], aim.size, 2);
-                case 7:
-                    return new Order([this.position[value][0], this.position[value][1] - aim.size + 1], aim.size, 2);
-            }
-        }
         let order;
         //ペアとなるエンティティが指定したエンティティに対して上下左右どこに繋がっているかで動作が変わる
         switch (this.direction[value]) {
@@ -185,7 +171,7 @@ class EntityInfo {
                 aim[2].size++;
                 //一番サイズが小さいものを指定する
                 aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
-                order = setOrder(aim);
+                order = this.setOrder(this.position[value], aim.direction, aim.size);
                 //動かす方向と繋がっている方向によって位置が微調整される
                 switch (aim.direction) {
                     case 3:
@@ -199,7 +185,7 @@ class EntityInfo {
             case 3:
                 aim[3].size++;
                 aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
-                order = setOrder(aim);
+                order = this.setOrder(this.position[value], aim.direction, aim.size);
                 switch (aim.direction) {
                     case 5:
                         order.position[1]++;
@@ -212,7 +198,7 @@ class EntityInfo {
             case 5:
                 aim[0].size++;
                 aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
-                order = setOrder(aim);
+                order = this.setOrder(this.position[value], aim.direction, aim.size);
                 switch (aim.direction) {
                     case 2:
                         order.position[0]--;
@@ -225,7 +211,7 @@ class EntityInfo {
             case 7:
                 aim[1].size++;
                 aim = aim.reduce((previous, current) => previous.size > current.size ? current : previous);
-                order = setOrder(aim);
+                order = this.setOrder(this.position[value], aim.direction, aim.size);
                 switch (aim.direction) {
                     case 2:
                         order.position[1]--;
