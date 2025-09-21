@@ -23,6 +23,22 @@ class LeafInfo {
     }
 }
 
+/**
+ * ボードの外側がどれくらい綺麗に揃っているかについてのスコアを記録するクラス
+ */
+class Line {
+    /**
+     * 先端部分の列の評価
+     * @type {LineSide}
+     */
+    head = new LineSide();
+    /**
+     * 終端部分の列の評価
+     * @type {LineSide}
+     */
+    end = new LineSide();
+}
+
 class LineSide {
     /**
      * 列の評価値
@@ -39,22 +55,6 @@ class LineSide {
      * @type {number}
      */
     flag = [true, true];
-}
-
-/**
- * ボードの外側がどれくらい綺麗に揃っているかについてのスコアを記録するクラス
- */
-class Line {
-    /**
-     * 先端部分の列の評価
-     * @type {LineSide}
-     */
-    head = new LineSide();
-    /**
-     * 終端部分の列の評価
-     * @type {LineSide}
-     */
-    end = new LineSide();
 }
 
 /**

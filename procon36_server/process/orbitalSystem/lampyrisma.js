@@ -97,7 +97,8 @@ class Lampyrisma extends Procon {
                 this.garden = this.garden.branch[element];
                 //ターンを追加して操作を確定する
                 this.turnAdd(this.garden.order.position, this.garden.order.size);
-                console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",左端:" + this.garden.score.vertical.head.value + ",右端:" + this.garden.score.vertical.end.value + ",上端:" + this.garden.score.horizon.head.value + ",下端:" + this.garden.score.horizon.end.value);
+                console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",左端:" + this.garden.score.vertical.head.line + ",右端:" + this.garden.score.vertical.end.line + ",上端:" + this.garden.score.horizon.head.line + ",下端:" + this.garden.score.horizon.end.line);
+                console.log("距離合計:"+this.garden.entity.distanceSum+"操作タイプ:"+this.garden.order.type);
             });
             //現在の盤面が完成しているか調べる
             if (this.garden.score.match != this.size * this.size) {
@@ -105,6 +106,9 @@ class Lampyrisma extends Procon {
                 this.garden.makeBranch(this.depth);
             }
             else {
+                break;
+            }
+            if(this.turn>1000){
                 break;
             }
         }

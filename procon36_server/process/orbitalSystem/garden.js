@@ -122,8 +122,8 @@ class BranchBase {
      */
     extendBranch(index) {
         let suggest = [];
-        this.matchSuggest(suggest,5);
         this.removalSuggest(suggest);
+        this.matchSuggest(suggest, 5);
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
         for (let i = 0; i < suggest.length - 1; i++) {
@@ -143,16 +143,22 @@ class BranchBase {
      * @param {Order[]} suggest 
      */
     forecast(suggest) {
-        this.branch = Array(this.width).fill({ score: new Score() });
+        this.branch = Array(this.width).fill({ score: new Score(), entity: { distanceSum: Infinity } });
         suggest.forEach(element => {
             //操作したボードで候補を作る
             let twig = new Garden(this.board, this.entity, element, this.width);
             //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
-            if (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound)) {
-                this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length, 0, twig).slice(0, this.width);
+            if (twig.score.compound != 0 && (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound))) {
+                if (twig.entity.distanceSum < this.branch[0].entity.distanceSum) {
+                    twig.order.type += 10;
+                    this.branch[0] = twig;
+                }
+                else {
+                    this.branch = this.branch.toSpliced(this.branch.filter(element => element.score.compound > twig.score.compound).length + 1, 0, twig).slice(0, this.width);
+                }
             }
         });
-        this.branch = this.branch.filter(element => element?.size);
+        this.branch = this.branch.filter(element => element?.size).toSorted((a, b) => b.score.compound - a.score.compound);
     }
 
     /**
@@ -246,10 +252,23 @@ class BranchBase {
             }
         }
     }
+
     /**
      * scoreの数値を設定する関数
      */
     evaluation() {
+        this.lineEvaluation();
+        this.score.match = this.size * this.size - (this.size - this.score.vertical.head.line - this.score.vertical.end.line) * (this.size - this.score.horizon.head.line - this.score.horizon.end.line);
+        if (this.cornerCheck()) {
+            this.matchCount(24);
+            this.score.compound = this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
+        }
+        else {
+            this.score.compound = 0;
+        }
+    }
+
+    lineEvaluation() {
         const addScore = (index, line, side) => {
             if (line.flag && line.flag[side]) {
                 if (this.entity.distance[this.board.at(index[0]).at(index[1])] == 1) {
@@ -268,7 +287,6 @@ class BranchBase {
                 line.flag = false;
             }
         }
-        this.score.compound = this.score.match;
         for (let i = 0; i < this.size; i++) {
             for (let j = 0; j < this.size; j++) {
                 addScore([i, j], this.score.horizon.head, 0);
@@ -291,8 +309,9 @@ class BranchBase {
                 break;
             }
         }
-        this.score.match=this.size*this.size-(this.size-this.score.vertical.head.line-this.score.vertical.end.line)*(this.size-this.score.horizon.head.line-this.score.horizon.end.line);
-        let limit = 5;
+    }
+
+    matchCount(limit) {
         //この条件式を発動させると枠のような形で位置が指定される
         //全て揃っている列は操作する必要がないので無視してfor文を回す
         for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
@@ -308,7 +327,15 @@ class BranchBase {
                 }
             }
         }
-        this.score.compound += this.score.match + this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
+    }
+
+    cornerCheck() {
+        const MinimumElements = 60;
+        return (this.size - this.score.horizon.head.line - this.score.horizon.end.line) * (this.size - this.score.vertical.head.line - this.score.vertical.end.line) < MinimumElements || (
+            (this.entity.distance[this.board.at(this.score.horizon.head.line).at(this.score.vertical.head.line)] == 1 || this.entity.distance[this.board.at(this.score.horizon.head.line).at(this.score.vertical.head.line + 1)] != 1) &&
+            (this.entity.distance[this.board.at(this.score.horizon.head.line).at(-this.score.vertical.end.line - 1)] == 1 || this.entity.distance[this.board.at(this.score.horizon.head.line + 1).at(-this.score.vertical.end.line - 1)] != 1) &&
+            (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(this.score.vertical.head.line)] == 1 || this.entity.distance[this.board.at(-this.score.horizon.end.line - 2).at(this.score.vertical.head.line)] != 1) &&
+            (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(-this.score.vertical.end.line - 1)] == 1 || this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(-this.score.vertical.end.line - 2)] != 1))
     }
 }
 

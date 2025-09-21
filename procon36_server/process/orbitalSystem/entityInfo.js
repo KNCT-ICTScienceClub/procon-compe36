@@ -31,6 +31,11 @@ class EntityInfo {
      */
     distance;
     /**
+     * そのインデックスの数値に対応したエンティティから、ペアとなるエンティティの座標を向くベクトルの縦と横の絶対値の総和
+     * @type {number}
+     */
+    distanceSum;
+    /**
      * ボードのスコア
      * @type {Score}
      */
@@ -56,10 +61,10 @@ class EntityInfo {
             for (let j = 0; j < this.size; j++) {
                 if (board[i][j] % 2 == 0) {
                     this.update(board[i][j]);
-                    score.match += (this.distance[board[i][j]] == 1 ? 2 : 0);
                 }
             }
         }
+        this.distanceSum = this.distance.reduce((previous, current) => previous + current - 1, 0);
         this.score = score;
     }
 
@@ -72,6 +77,7 @@ class EntityInfo {
         this.position = [...source.position];
         this.vector = [...source.vector];
         this.distance = [...source.distance];
+        this.distanceSum = source.distanceSum;
         this.direction = [...source.direction];
     }
 
@@ -83,8 +89,10 @@ class EntityInfo {
         let pair = value % 2 == 0 ? value + 1 : value - 1;
         this.vector[value] = [this.position[pair][0] - this.position[value][0], this.position[pair][1] - this.position[value][1]];
         this.vector[pair] = [-this.vector[value][0], -this.vector[value][1]];
+        this.distanceSum -= (this.distance[value] - 1) * 2;
         this.distance[value] = Math.abs(this.vector[value][0]) + Math.abs(this.vector[value][1]);
         this.distance[pair] = this.distance[value];
+        this.distanceSum += (this.distance[value] - 1) * 2;
         this.direction[value] = (this.vector[value][0] > 0 ? 2 : (this.vector[value][0] != 0) ? 5 : 1) * (this.vector[value][1] > 0 ? 3 : (this.vector[value][1] != 0) ? 7 : 1);
         this.direction[pair] = (this.vector[pair][0] > 0 ? 2 : (this.vector[pair][0] != 0) ? 5 : 1) * (this.vector[pair][1] > 0 ? 3 : (this.vector[pair][1] != 0) ? 7 : 1);
     }
@@ -225,4 +233,5 @@ class EntityInfo {
         return order;
     }
 }
+
 module.exports = EntityInfo;

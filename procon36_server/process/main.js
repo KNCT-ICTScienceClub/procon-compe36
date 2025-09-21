@@ -12,8 +12,8 @@ let board = [
     [6, 7, 8, 9, 10, 11],
     [12, 13, 14, 15, 16, 17]
 ]*/
-let array=[];
-let test=[];
+let array = [];
+let test = [];
 [
     69,
     0,
@@ -159,17 +159,17 @@ let test=[];
     69,
     20,
     67
-   ].forEach((element,index)=>{
-    if(index%12==11){
+].forEach((element, index) => {
+    if (index % 12 == 11) {
         test.push(element);
         array.push(test);
-        test=[];
+        test = [];
     }
-    else{
+    else {
         test.push(element);
     }
-   })
-let lampyrisma = new Lampyrisma(24, 4, 3);
+})
+let lampyrisma = new Lampyrisma(20, 5, 3);
 lampyrisma.makeProblemFile();
 lampyrisma.allLink();
 lampyrisma.makeAnswerFile();
