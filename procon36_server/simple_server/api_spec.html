@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <title>Redoc</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<redoc expand-responses="200"></redoc>
+<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+<script>
+Redoc.init(
+{
+    "openapi": "3.0.0",
+    "info": {
+        "description": "第36回高専プロコン競技部門で使用するAPIサーバーの仕様です。\n\n### 認証\n認証にはチームごとに事前配布したトークンを用います。\\\nトークンをクエリパラメータ(token)かヘッダー(procon-token)に指定してリクエストしてください。",
+        "title": "procon36 api",
+        "version": "1.0"
+    },
+    "paths": {
+        "/": {
+            "get": {
+                "operationId": "GetMatch",
+                "summary": "試合情報取得API",
+                "description": "試合情報を取得するAPIです",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "description": "トークン",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "header",
+                        "name": "Procon-Token",
+                        "description": "トークン",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "正常",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GetMatchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "トークンが指定されていない、または不正である場合にエラーになります"
+                    },
+                    "403": {
+                        "description": "競技時間外にアクセスした場合にエラーになります",
+                        "content": {
+                            "text/plain; charset=utf-8": {
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "AccessTimeError"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "予期しないエラーです"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "SubmitAnswer",
+                "summary": "回答提出API",
+                "description": "回答を提出するAPIです",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "token",
+                        "description": "トークン",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "header",
+                        "name": "Procon-Token",
+                        "description": "トークン",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitAnswerRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "正常",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SubmitAnswerResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "リクエストの内容が不正である場合にエラーになります"
+                    },
+                    "401": {
+                        "description": "トークンが指定されていない、または不正である場合にエラーになります"
+                    },
+                    "403": {
+                        "description": "競技時間外にアクセスした場合にエラーになります",
+                        "content": {
+                            "text/plain; charset=utf-8": {
+                                "schema": {
+                                    "type": "string",
+                                    "enum": [
+                                        "AccessTimeError"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "description": "予期しないエラーです"
+                    }
+                }
+            }
+        },
+        "/match": {
+            "post": {
+                "operationId": "CreateMatch",
+                "summary": "試合作成API",
+                "description": "試合を作成し開始するAPIです。**簡易サーバーのみに存在します。**",
+                "parameters": [],
+                "requestBody": {
+                    "description": "",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateMatchRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "正常",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreateMatchResponse"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "リクエストの内容が不正である場合にエラーになります"
+                    },
+                    "default": {
+                        "description": "予期しないエラーです"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Answer": {
+                "type": "object",
+                "required": [
+                    "ops"
+                ],
+                "properties": {
+                    "ops": {
+                        "description": "導きの列です。",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Guide"
+                        }
+                    }
+                }
+            },
+            "CreateMatchRequest": {
+                "type": "object",
+                "required": [
+                    "match",
+                    "start"
+                ],
+                "properties": {
+                    "match": {
+                        "$ref": "#/components/schemas/MatchConfig"
+                    },
+                    "start": {
+                        "description": "試合が開始するまでの秒数です。",
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            },
+            "CreateMatchResponse": {
+                "type": "object"
+            },
+            "Field": {
+                "description": "フィールド情報です。",
+                "type": "object",
+                "required": [
+                    "size",
+                    "entities"
+                ],
+                "properties": {
+                    "size": {
+                        "description": "フィールド幅です。",
+                        "type": "integer",
+                        "minimum": 4,
+                        "maximum": 24
+                    },
+                    "entities": {
+                        "description": "エンティティ情報です。\n長さ size の配列で要素が長さ size の配列です。\nエンティティについての制約は競技ルールを参照ください。",
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 0
+                            }
+                        }
+                    }
+                }
+            },
+            "GetMatchResponse": {
+                "$ref": "#/components/schemas/Match"
+            },
+            "Guide": {
+                "description": "導きの情報です。",
+                "type": "object",
+                "required": [
+                    "x",
+                    "y",
+                    "n"
+                ],
+                "properties": {
+                    "x": {
+                        "description": "園の左上のX座標です。",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 22
+                    },
+                    "y": {
+                        "description": "園の左上のY座標です。",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 22
+                    },
+                    "n": {
+                        "description": "園の一辺の長さです。",
+                        "type": "integer",
+                        "minimum": 2,
+                        "maximum": 24
+                    }
+                }
+            },
+            "Match": {
+                "description": "試合情報です",
+                "type": "object",
+                "required": [
+                    "startsAt"
+                ],
+                "properties": {
+                    "startsAt": {
+                        "description": "開始時刻のUNIXタイムです。\n0 の場合は未定です。\n開始10秒前程度から有効な値が返ります。",
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "problem": {
+                        "$ref": "#/components/schemas/Problem"
+                    }
+                }
+            },
+            "MatchConfig": {
+                "description": "作成する試合の情報です。",
+                "type": "object",
+                "required": [
+                    "players",
+                    "problem",
+                    "duration"
+                ],
+                "properties": {
+                    "players": {
+                        "description": "試合に参加するプレイヤーの情報です。",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlayerConfig"
+                        }
+                    },
+                    "problem": {
+                        "$ref": "#/components/schemas/Problem"
+                    },
+                    "duration": {
+                        "description": "試合時間を秒単位で定義します。",
+                        "type": "integer",
+                        "minimum": 0,
+                        "exclusiveMinimum": true
+                    }
+                }
+            },
+            "PlayerConfig": {
+                "type": "object",
+                "required": [
+                    "token",
+                    "name"
+                ],
+                "properties": {
+                    "token": {
+                        "description": "プレイヤーのトークン情報を定義します。\n`Procon-Token` ヘッダーや `token` クエリパラメータで指定するものと同じものにしてください。\n複数のプレイヤーを定義する場合は token が被らないようにしてください。",
+                        "type": "string"
+                    },
+                    "name": {
+                        "description": "プレイヤーの名前です。",
+                        "type": "string"
+                    }
+                }
+            },
+            "Problem": {
+                "description": "問題情報です。",
+                "type": "object",
+                "required": [
+                    "field"
+                ],
+                "properties": {
+                    "field": {
+                        "$ref": "#/components/schemas/Field"
+                    }
+                }
+            },
+            "ProblemConfig": {
+                "type": "object",
+                "required": [
+                    "field"
+                ],
+                "properties": {
+                    "field": {
+                        "description": "エンティティの値の2次元配列です。\nフィールドについての制約は競技ルールを参照ください。",
+                        "type": "array",
+                        "items": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 0
+                            }
+                        }
+                    }
+                }
+            },
+            "SubmitAnswerRequest": {
+                "$ref": "#/components/schemas/Answer"
+            },
+            "SubmitAnswerResponse": {
+                "type": "object",
+                "required": [
+                    "revision"
+                ],
+                "properties": {
+                    "revision": {
+                        "description": "受理番号です。\nこの値が最も大きいものが最終的に受理されています。",
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                }
+            }
+        }
+    }
+}
+)
+</script>
+</body>
+</html>
+

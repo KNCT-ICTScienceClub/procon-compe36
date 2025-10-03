@@ -1,0 +1,18 @@
+{
+  "match": {
+    "players": [
+      {"token": "kurec526e1864ceff3498f856380652755122e46e659d433c1df12883fb3cfe1", "name": "呉高専"},
+      {"token": "player2", "name": "高専2"}
+    ],
+    "problem": {
+      "field": [
+        [6, 3, 4, 0],
+        [1, 5, 3, 5],
+        [2, 7, 0, 6],
+        [1, 2, 7, 4]
+      ]
+    },
+    "duration": 300
+  },
+  "start": 10
+}
