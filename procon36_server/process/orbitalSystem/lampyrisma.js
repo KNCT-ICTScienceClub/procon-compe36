@@ -36,6 +36,16 @@ class Lampyrisma extends Procon {
      * @type {number}
      */
     depth;
+    timeLimit;
+
+    get CompleteFlag() {
+        return this.garden.score.match == this.size * this.size;
+    }
+
+    get TimeFlag() {
+        this.timer.end();
+        return this.timeLimit > this.timer.result;
+    }
 
     /**
      * 数値を渡すとそのサイズの問題をランダムに作成する
@@ -43,12 +53,14 @@ class Lampyrisma extends Procon {
      * @param {number | number[][]} element ボードを生成するための要素
      * @param {number} depth 探索の深さ
      * @param {number} width 探索の幅
+     * @param {number} timeLimit 制限時間(sec)
      */
-    constructor(element, depth, width) {
+    constructor(element, depth, width, timeLimit) {
         super(element);
         this.timer.start();
         this.depth = depth;
         this.width = width;
+        this.timeLimit = timeLimit;
         let flag = [...Array(this.size * this.size / 2).fill(false)];
         //ここで要素の数値を倍化させている
         //ペアは正確に言うと2nと2n+1がペアになる
@@ -70,7 +82,9 @@ class Lampyrisma extends Procon {
      */
     allLink() {
         //完成盤面が見つかるまでループする
-        while (true) {
+        while (!this.CompleteFlag && this.TimeFlag) {
+            //深さが一個減っているので末端のノードを追加する
+            this.garden.makeBranch(this.depth);
             /**
              * @type {LeafInfo[]} 全ての葉の情報
              */
@@ -100,17 +114,12 @@ class Lampyrisma extends Procon {
                 console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",右端:" + this.garden.score.vertical.end.line + ",下端:" + this.garden.score.horizon.end.line + ",左端:" + this.garden.score.vertical.head.line + ",上端:" + this.garden.score.horizon.head.line);
                 console.log("距離合計:" + this.garden.entity.distanceSum + "盤面タイプ:" + this.garden.status.Current);
             });
-            //現在の盤面が完成しているか調べる
-            if (this.garden.score.match != this.size * this.size) {
-                //揃っていない場合深さが一個減っているので末端のノードを追加する
-                this.garden.makeBranch(this.depth);
-            }
-            else {
-                break;
-            }
-            if (this.turn > 1000) {
-                break;
-            }
+        }
+        if (this.CompleteFlag) {
+            console.log("正常終了");
+        }
+        if (!this.TimeFlag) {
+            console.log("制限時間に達したので計算を強制終了します")
         }
     }
 }

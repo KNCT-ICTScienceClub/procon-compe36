@@ -482,7 +482,7 @@ class Root extends BranchBase {
         //とりあえずインデックスを[0,0,0,.....]で初期化する
         this.index = [...Array(depth).fill(0)];
         //探索の木を指定された深さと幅で成長させる
-        this.makeTrunk(depth);
+        this.makeTrunk(depth - 1);
     }
 }
 
