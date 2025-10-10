@@ -164,7 +164,7 @@ class Procon {
         let receiveData = new ReceiveData(this.board);
         //unity側で読み込むときに二次元配列を渡すと都合が悪いので一次元に変換して渡す
         receiveData.problem.field.entities = receiveData.problem.field.entities.flat();
-        fs.writeFileSync(`../informationLog/problem.json`, JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
+        fs.writeFileSync(path.resolve(__dirname, "../../informationLog/problem.json"), JSON.stringify(receiveData, undefined, ' '), 'utf-8', (err) => console.error(err));
     }
 
     /**
@@ -172,8 +172,9 @@ class Procon {
      */
     makeAnswerFile() {
         let sendData = new SendData(this.answer);
-        fs.writeFileSync(`../informationLog/answer.json`, JSON.stringify(sendData, undefined, ' '), 'utf-8', (err) => console.error(err));
-        return sendData;
+        let json = JSON.stringify(sendData, undefined, ' ');
+        fs.writeFileSync(path.resolve(__dirname, "../../informationLog/answer.json"), json, 'utf-8', (err) => console.error(err));
+        return JSON.parse(json);
     }
 }
 
