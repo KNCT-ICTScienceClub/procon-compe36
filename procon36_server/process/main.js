@@ -170,7 +170,7 @@ let test = [];
     }
 })
 //node --max-old-space-size=16000 main.js
-let lampyrisma = new Lampyrisma(12, 8, 4, 240);
+let lampyrisma = new Lampyrisma(8, 10, 3, 240);
 lampyrisma.makeProblemFile();
 lampyrisma.allLink();
 lampyrisma.makeAnswerFile();
