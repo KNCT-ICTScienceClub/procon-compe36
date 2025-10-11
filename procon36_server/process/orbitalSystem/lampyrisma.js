@@ -41,6 +41,7 @@ class Lampyrisma extends Procon {
      * @type {number}
      */
     timeLimit;
+    extendFlag = false;
 
     get CompleteFlag() {
         return this.garden.score.match == this.size * this.size;
@@ -118,6 +119,10 @@ class Lampyrisma extends Procon {
                 console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",右端:" + this.garden.score.vertical.end.line + ",下端:" + this.garden.score.horizon.end.line + ",左端:" + this.garden.score.vertical.head.line + ",上端:" + this.garden.score.horizon.head.line);
                 console.log("距離合計:" + this.garden.entity.distanceSum + "盤面タイプ:" + this.garden.entity.status.Current);
             });
+            if (!this.extendFlag && this.garden.entity.status.hasFlag(this.garden.entity.status.Finish)) {
+                this.addDepth();
+                this.extendFlag = true;
+            }
         }
         if (this.CompleteFlag) {
             console.log("正常終了");
@@ -127,9 +132,10 @@ class Lampyrisma extends Procon {
         }
     }
 
-    addDepth(){
+    addDepth() {
+        console.log("深さを拡張します")
         this.depth++;
-        this.makeBranch(this.depth);
+        this.garden = new Root(this.garden.board, this.depth, this.width);
     }
 }
 

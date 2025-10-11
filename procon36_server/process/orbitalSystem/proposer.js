@@ -79,7 +79,7 @@ class Proposer extends EntityInfo {
     }
 
     setStatus(board) {
-        const MinimumElements = 50;
+        const MinimumElements = 60;
         if ((this.size - this.score.horizon.head.line - this.score.horizon.end.line) * (this.size - this.score.vertical.head.line - this.score.vertical.end.line) > MinimumElements) {
             if (this.distance[board.at(this.score.horizon.head.line).at(this.score.vertical.head.line)] != 1) {
                 this.status.position.left = this.position[board.at(this.score.horizon.head.line).at(this.score.vertical.head.line)];
@@ -100,6 +100,9 @@ class Proposer extends EntityInfo {
         }
         if (!this.status.hasFlag(this.status.Corner)) {
             this.status.addFlag(this.status.Normal);
+        }
+        if((this.size - this.score.horizon.head.line - this.score.horizon.end.line) * (this.size - this.score.vertical.head.line - this.score.vertical.end.line) < MinimumElements*2){
+            this.status.addFlag(this.status.Finish);
         }
     }
 

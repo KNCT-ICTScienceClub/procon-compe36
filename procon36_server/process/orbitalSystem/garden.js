@@ -118,7 +118,6 @@ class BranchBase {
     /**
      * 現在の葉からノードを作成する
      * @param {number[]} index 
-     * @param {boolean} adjust 
      */
     extendBranch(index) {
         let suggest = [];
@@ -129,8 +128,8 @@ class BranchBase {
             }
         }
         if (this.entity.status.hasFlag(this.entity.status.Normal) || suggest.length == 0) {
-            //this.entity.removalSuggest(this.board,suggest)
-            this.entity.matchSuggest(this.board, suggest, 24);
+            this.entity.removalSuggest(this.board, suggest)
+            this.entity.matchSuggest(this.board, suggest, 5);
         }
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
@@ -203,7 +202,6 @@ class BranchBase {
         this.lineEvaluation();
         this.score.match = this.size * this.size - (this.size - this.score.vertical.head.line - this.score.vertical.end.line) * (this.size - this.score.horizon.head.line - this.score.horizon.end.line);
         this.matchCount();
-        this.entity.setStatus(this.board);
         this.score.compound = this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
     }
 
@@ -279,6 +277,7 @@ class Garden extends BranchBase {
         this.engage(order.position, order.size);
         this.evaluation();
         this.entity.score = this.score;
+        this.entity.setStatus(this.board);
         this.order = order;
     }
 }
@@ -294,6 +293,7 @@ class Root extends BranchBase {
         this.entity.initialize(this.board);
         this.evaluation();
         this.entity.score = this.score
+        this.entity.setStatus(this.board);
         //エンティティの情報を作る
         //とりあえずインデックスを[0,0,0,.....]で初期化する
         this.index = [...Array(depth).fill(0)];
