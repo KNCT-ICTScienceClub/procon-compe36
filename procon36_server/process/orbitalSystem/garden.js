@@ -1,44 +1,6 @@
 const EntityInfo = require("./entityInfo");
 const { LeafInfo, Score, Order, Status } = require("./satellite");
 
-/**
- * ノードとなるクラス
- */
-class Garden extends BranchBase {
-    /**
-     * @param {number[][]} board エンゲージ後のボード
-     * @param {EntityInfo} entity　エンゲージ後のボード
-     * @param {Order} order エンゲージ時の操作
-     * @param {number} width
-     */
-    constructor(board, entity, order, width) {
-        super(board, width);
-        this.entity.copyInfo(entity);
-        this.engage(order.position, order.size);
-        this.evaluation();
-        this.entity.score = this.score;
-        this.order = order;
-    }
-}
-
-class Root extends BranchBase {
-    /**
-     * @param {number[][]} board エンゲージ後のボード
-     * @param {number} depth
-     * @param {number} width
-     */
-    constructor(board, depth, width) {
-        super(board, width);
-        this.entity.initialize(this.board, this.score);
-        this.evaluation();
-        //エンティティの情報を作る
-        //とりあえずインデックスを[0,0,0,.....]で初期化する
-        this.index = [...Array(depth).fill(0)];
-        //探索の木を指定された深さと幅で成長させる
-        this.makeTrunk(depth - 1);
-    }
-}
-
 class BranchBase {
     /**
      * 現在のボード
@@ -80,6 +42,10 @@ class BranchBase {
      * @type {number[]}
      */
     index;
+    /**
+     * 盤面タイプ
+     * @type {Status}
+     */
     status;
 
     /**
@@ -144,31 +110,14 @@ class BranchBase {
      * 全ての葉の部分から枝を生成する
      * @param {number} depth 
      */
-    makeBranch(depth,leaves) {
+    makeBranch(depth) {
         //指定した深さまで潜ると実行される
         if (depth == 1) {
             this.extendBranch(this.index);
-            //葉の情報を書き込む
-            if (this.branch.length != 0) {
-                if (this.branch[0].score.compound > leaves[0].score) {
-                    /*
-                    三項演算子
-                    完成盤面であった場合はそのノードに到達するまでの全てのインデックスが渡される
-                    そうでない時はその葉が根に直接繋がっているノードのどれに属しているかを示すインデックスを渡す
-                    */
-                    //スコアが現在の葉よりも高かった場合葉を上書きする
-                    //下のspliceはleaves=[new LeafInfo()]とほとんど等しいが左の場合だと非破壊であるためメソッドの外に値を渡せない
-                    leaves.splice(0, leaves.length, new LeafInfo(this.branch[0].score.match == this.size * this.size ? this.branch[0].index : this.branch[0].index[0], this.branch[0].score.compound));
-                }
-                else if (this.branch[0].score.compound == leaves[0].score) {
-                    //スコアが同じであった場合葉に情報を追記する
-                    leaves.push(new LeafInfo(this.branch[0].index[0], this.branch[0].score.compound));
-                }
-            }
         }
         //指定した深さまで潜れていない場合再帰的に関数を実行し一つ下の階層に潜る
         else {
-            this.branch.forEach(element => element.makeBranch(depth - 1,leaves));
+            this.branch.forEach(element => element.makeBranch(depth - 1));
         }
     }
 
@@ -500,6 +449,44 @@ class BranchBase {
         if (!this.status.hasFlag(this.status.Corner)) {
             this.status.addFlag(this.status.Normal);
         }
+    }
+}
+
+/**
+ * ノードとなるクラス
+ */
+class Garden extends BranchBase {
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {EntityInfo} entity　エンゲージ後のボード
+     * @param {Order} order エンゲージ時の操作
+     * @param {number} width
+     */
+    constructor(board, entity, order, width) {
+        super(board, width);
+        this.entity.copyInfo(entity);
+        this.engage(order.position, order.size);
+        this.evaluation();
+        this.entity.score = this.score;
+        this.order = order;
+    }
+}
+
+class Root extends BranchBase {
+    /**
+     * @param {number[][]} board エンゲージ後のボード
+     * @param {number} depth
+     * @param {number} width
+     */
+    constructor(board, depth, width) {
+        super(board, width);
+        this.entity.initialize(this.board, this.score);
+        this.evaluation();
+        //エンティティの情報を作る
+        //とりあえずインデックスを[0,0,0,.....]で初期化する
+        this.index = [...Array(depth).fill(0)];
+        //探索の木を指定された深さと幅で成長させる
+        this.makeTrunk(depth - 1);
     }
 }
 

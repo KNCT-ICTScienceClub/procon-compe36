@@ -42,8 +42,6 @@ class Lampyrisma extends Procon {
      */
     timeLimit;
 
-    leaves = [new LeafInfo(0, 0)];
-
     get CompleteFlag() {
         return this.garden.score.match == this.size * this.size;
     }
@@ -90,28 +88,26 @@ class Lampyrisma extends Procon {
         //完成盤面が見つかるまでループする
         while (!this.CompleteFlag && this.TimeFlag) {
             //深さが一個減っているので末端のノードを追加する
-            this.garden.makeBranch(this.depth,this.leaves);
+            this.garden.makeBranch(this.depth);
             /**
              * @type {LeafInfo[]} 全ての葉の情報
              */
-
-            //let leaves = [new LeafInfo(0, 0)];
+            let leaves = [new LeafInfo(0, 0)];
             //参照渡しで直接書き換える
-            //this.garden.pruning(leaves, this.depth);
-
+            this.garden.pruning(leaves, this.depth);
             //スコアを高い順に並び替える
             let index = [];
             //インデックスが配列かどうか調べる
-            if (!this.leaves[0].index.length) {
+            if (!leaves[0].index.length) {
                 let duplicate = [...Array(this.width).fill(0)];
                 //スコアが最高値の葉が複数あったときには数が多い方を選択する
-                this.leaves.forEach(leaf => duplicate[leaf.index]++);
+                leaves.forEach(leaf => duplicate[leaf.index]++);
                 //スコアが良い葉があるノードを選択してそれ以外を削除することでノードを進める
                 index = [duplicate.indexOf(Math.max(...duplicate))];
             }
             //配列だった場合完成盤面が見つかったということになる
             else {
-                index = this.leaves[0].index;
+                index = leaves[0].index;
             }
             //通常は1回しか操作を行わない
             index.map(element => {

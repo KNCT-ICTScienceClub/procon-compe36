@@ -13,7 +13,7 @@ let board = [
     [12, 13, 14, 15, 16, 17]
 ]*/
 //node --max-old-space-size=16000 main.js
-let lampyrisma = new Lampyrisma(8, 7, 3, 270);
+let lampyrisma = new Lampyrisma(14, 7, 3, 270);
 lampyrisma.makeProblemFile();
 lampyrisma.allLink();
 lampyrisma.makeAnswerFile();
