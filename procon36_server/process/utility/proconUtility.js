@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require("path");
 
 /**
  * プロコン用の汎用機能をまとめたクラス

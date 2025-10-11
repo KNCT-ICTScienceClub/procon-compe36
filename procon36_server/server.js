@@ -2,9 +2,11 @@ const express = require("express");
 const { spawn, fork, ChildProcess } = require("child_process");
 const path = require("path");
 
+const isFinal = false;
+
 const app = express();
 const port = 3000;
-const targetURL = "http://localhost:3001";
+const targetURL = isFinal ? "http://172.19.0.1:80" : "http://localhost:3001";
 
 const server = app.listen(port, async (err) => {
     
@@ -145,8 +147,9 @@ const server = app.listen(port, async (err) => {
          * @param {number[][]} board 問題のボード（エンティティの集合体）
          * @param {number} depth 探索の深さ
          * @param {number} width 探索の幅
+         * @param {number} timeLimit 制限時間(sec)
          */
-        const forkProcess = async (board, depth, width) => {
+        const forkProcess = async (board, depth, width, timeLimit) => {
 
             // process.js の終了まで待機可能
             return new Promise((resolve, reject) => {
@@ -166,7 +169,8 @@ const server = app.listen(port, async (err) => {
                 child.on("spawn", () => child.send({
                     board: board,
                     depth: depth,
-                    width: width
+                    width: width,
+                    timeLimit: timeLimit
                 }));
 
                 // 子プロセスからメッセージが送信されたとき
@@ -225,7 +229,7 @@ const server = app.listen(port, async (err) => {
 
         const matchInfo = await getMatchInfo();
 
-        const answer = await forkProcess(matchInfo.problem.field.entities, 4, 3);
+        const answer = await forkProcess(matchInfo.problem.field.entities, 7, 3, 270);
     
         await postAnswer(answer);
     }
