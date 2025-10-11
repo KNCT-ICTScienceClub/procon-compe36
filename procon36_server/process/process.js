@@ -6,10 +6,12 @@ process.once("message", ({ board, depth, width, timeLimit }) => {
 
     lampyrisma.makeProblemFile();
     lampyrisma.allLink();
-    lampyrisma.makeAnswerFile();
+    const answer = lampyrisma.makeAnswerFile();
+
+    console.log(`手数: ${answer.ops?.length}`);
     lampyrisma.timer.end();
     lampyrisma.timer.show();
 
-    process.send()
+    process.send(answer);
     process.exit();
 });

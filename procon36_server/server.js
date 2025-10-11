@@ -2,10 +2,10 @@ const express = require("express");
 const { spawn, fork, ChildProcess } = require("child_process");
 const path = require("path");
 
-const isFinal = false;
+const isFinal = true;
 
 const app = express();
-const port = 3000;
+const port = 5500;
 const targetURL = isFinal ? "http://172.19.0.1:80" : "http://localhost:3001";
 
 const server = app.listen(port, async (err) => {
@@ -105,7 +105,8 @@ const server = app.listen(port, async (err) => {
                                 process.exit(-1);
                             // 403 Forbidden: サーバーは起動しているが試合がまだ開かれていない
                             case 403:
-                                process.stderr.write("\rMatch isn't held.\n");
+                                // process.stderr.write("\rMatch isn't held.\n");
+                                await progressLog("Match isn't held", 400);
                                 break;
                             // 404 Not found: URLが間違っている
                             case 404:
