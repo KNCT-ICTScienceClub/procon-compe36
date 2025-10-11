@@ -1,6 +1,6 @@
 const Procon = require("../utility/proconUtility");
 const { Garden, Root } = require("./garden");
-const EntityInfo = require("./entityInfo");
+const Proposer = require("./proposer");
 const { LeafInfo } = require("./satellite");
 
 /**
@@ -21,7 +21,7 @@ class Lampyrisma extends Procon {
     encodedBoard;
     /**
      * 各エンティティの情報が格納された配列
-     * @type {EntityInfo}
+     * @type {Proposer}
      */
     //「要素の数値=配列インデックス」になるように配置されているため
     //配列の位置に関係なく要素を指定するだけでダイレクトに情報を抜き出せるようになっている
@@ -116,7 +116,7 @@ class Lampyrisma extends Procon {
                 //ターンを追加して操作を確定する
                 this.turnAdd(this.garden.order.position, this.garden.order.size);
                 console.log("turn:" + this.turn + ",match:" + this.garden.score.match + ",compound:" + this.garden.score.compound + ",右端:" + this.garden.score.vertical.end.line + ",下端:" + this.garden.score.horizon.end.line + ",左端:" + this.garden.score.vertical.head.line + ",上端:" + this.garden.score.horizon.head.line);
-                console.log("距離合計:" + this.garden.entity.distanceSum + "盤面タイプ:" + this.garden.status.Current);
+                console.log("距離合計:" + this.garden.entity.distanceSum + "盤面タイプ:" + this.garden.entity.status.Current);
             });
         }
         if (this.CompleteFlag) {
@@ -125,6 +125,11 @@ class Lampyrisma extends Procon {
         if (!this.TimeFlag) {
             console.log("制限時間に達したので計算を強制終了します")
         }
+    }
+
+    addDepth(){
+        this.depth++;
+        this.makeBranch(this.depth);
     }
 }
 

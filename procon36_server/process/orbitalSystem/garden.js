@@ -1,5 +1,5 @@
-const EntityInfo = require("./entityInfo");
-const { LeafInfo, Score, Order, Status } = require("./satellite");
+const Proposer = require("./proposer");
+const { LeafInfo, Score, Order } = require("./satellite");
 
 class BranchBase {
     /**
@@ -14,7 +14,7 @@ class BranchBase {
     size;
     /**
      * 各エンティティの情報が格納された配列
-     * @type {EntityInfo}
+     * @type {Proposer}
      */
     entity;
     /**
@@ -42,11 +42,6 @@ class BranchBase {
      * @type {number[]}
      */
     index;
-    /**
-     * 盤面タイプ
-     * @type {Status}
-     */
-    status;
 
     /**
      * @param {number[][]} board
@@ -55,9 +50,8 @@ class BranchBase {
     constructor(board, width) {
         this.size = board.length;
         this.board = board.map(array => [...array]);
-        this.entity = new EntityInfo();
+        this.entity = new Proposer();
         this.score = new Score();
-        this.status = new Status();
         this.width = width;
         this.index = [];
     }
@@ -128,15 +122,15 @@ class BranchBase {
      */
     extendBranch(index) {
         let suggest = [];
-        if (this.status.hasFlag(this.status.Corner)) {
-            this.cornerSuggest(suggest);
+        if (this.entity.status.hasFlag(this.entity.status.Corner)) {
+            this.entity.cornerSuggest(this.board, suggest);
             if (suggest.length == 0) {
-                this.adjustSuggest(suggest);
+                this.entity.adjustSuggest(this.board, suggest);
             }
         }
-        if (this.status.hasFlag(this.status.Normal) || suggest.length == 0) {
-            this.removalSuggest(suggest)
-            this.matchSuggest(suggest, 5);
+        if (this.entity.status.hasFlag(this.entity.status.Normal) || suggest.length == 0) {
+            //this.entity.removalSuggest(this.board,suggest)
+            this.entity.matchSuggest(this.board, suggest, 24);
         }
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
@@ -161,11 +155,11 @@ class BranchBase {
         suggest.forEach(element => {
             //操作したボードで候補を作る
             let twig = new Garden(this.board, this.entity, element, this.width);
-            if (this.status.hasFlag(this.status.Normal)) {
+            if (this.entity.status.hasFlag(this.entity.status.Normal)) {
                 //adjustingによるサジェストだった場合ループを防ぐため評価が上昇するものでないと受け付けない
                 if (element.type == 1 || (element.type == 2 && twig.score.compound > this.score.compound)) {
                     if (twig.entity.distanceSum < this.branch[0].entity.distanceSum) {
-                        twig.status.addFlag(this.status.Short);
+                        twig.entity.status.addFlag(this.entity.status.Short);
                         this.branch[0] = twig;
                     }
                     else {
@@ -173,163 +167,11 @@ class BranchBase {
                     }
                 }
             }
-            if (this.status.hasFlag(this.status.Corner)) {
+            if (this.entity.status.hasFlag(this.entity.status.Corner)) {
                 this.branch = this.branch.toSpliced(this.branch.filter(element => element.entity.distanceSum < twig.entity.distanceSum).length, 0, twig).slice(0, this.width);
             }
         });
         this.branch = this.branch.filter(element => element?.size).toSorted((a, b) => b.score.compound - a.score.compound);
-    }
-
-    /**
-     * 次ターンのみに着目して、ペアを生成できる操作を列挙する関数
-     * @param {Order[]} suggest 列挙した操作を格納した配列
-     * @param {number} limit 枠の太さ
-     */
-    matchSuggest(suggest, limit) {
-        //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
-            for (let j = this.score.vertical.head.line; j < this.size - this.score.vertical.end.line; j++) {
-                //この条件式を発動させると枠のような形で位置が指定される
-                if (limit <= i && limit == j) {
-                    if (this.size - this.score.horizon.head.line - this.score.horizon.end.line - limit - i > 0) {
-                        j += this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 > 0 ? this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 : 0;
-                    }
-                }
-                //ペアになっていないエンティティに対してサジェストを出す
-                if (this.entity.distance[this.board[i][j]] != 1) {
-                    let order = this.entity.matching(this.board[i][j] % 2 == 0 ? this.board[i][j] + 1 : this.board[i][j] - 1);
-                    //位置によっては指定した場所がボードを飛び出すことがあるので条件式でふるいにかける
-                    if (0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
-                        suggest.push(order);
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * ペアになっていない要素をボードの端から排除する操作を列挙する関数
-     * @param {Order[]} suggest 列挙した操作を格納した配列
-     */
-    removalSuggest(suggest) {
-        for (let i = 0; i < this.size - this.score.vertical.head.line - this.score.vertical.end.line - 1; i++) {
-            for (let j = 2; j <= i + 2 && j < this.size - this.score.horizon.head.line - this.score.horizon.end.line; j++) {
-                if (this.entity.distance[this.board[this.score.horizon.head.line][i + 1 + this.score.vertical.head.line]] != 1) {
-                    suggest.push(this.entity.setOrder([i + 1 + this.score.vertical.head.line, this.score.horizon.head.line], 3, j));
-                }
-                if (this.entity.distance[this.board[this.size - this.score.horizon.end.line - 1][this.size - i - this.score.vertical.end.line - 2]] != 1) {
-                    suggest.push(this.entity.setOrder([this.size - i - this.score.vertical.end.line - 2, this.size - this.score.horizon.end.line - 1], 7, j));
-                }
-            }
-        }
-        for (let i = 0; i < this.size - this.score.horizon.head.line - this.score.horizon.end.line - 1; i++) {
-            for (let j = 2; j <= i + 2 && j < this.size - this.score.vertical.head.line - this.score.vertical.end.line; j++) {
-                if (this.entity.distance[this.board[i + 1 + this.score.horizon.head.line][this.size - this.score.vertical.end.line - 1]] != 1) {
-                    suggest.push(this.entity.setOrder([this.size - this.score.vertical.end.line - 1, i + 1 + this.score.horizon.head.line], 5, j));
-                }
-                if (this.entity.distance[this.board[this.size - i - this.score.horizon.end.line - 2][this.score.vertical.head.line]] != 1) {
-                    suggest.push(this.entity.setOrder([this.score.vertical.head.line, this.size - i - this.score.horizon.end.line - 2], 2, j));
-                }
-            }
-        }
-    }
-
-    cornerSuggest(suggest) {
-        if (this.status.position.top.length != 0) {
-            this.board.at(this.score.horizon.head.line).slice(this.score.vertical.head.line + 2, -this.score.vertical.end.line - 1).forEach(element => {
-                let order = new Order([0, 0], 0, 1);
-                if (this.entity.distance[element] == 1) {
-                    order = this.entity.setOrder(this.entity.position[element], 2, this.size - this.score.vertical.end.line - this.entity.position[element][0]);
-                    //ペアが繋がっている方向によって位置が微調整される
-                    if (this.entity.direction[element] == 5) {
-                        order.size++;
-                        order.position[0]--;
-                    }
-                }
-                else {
-                    order = this.entity.matching(element % 2 == 0 ? element + 1 : element - 1);
-                }
-                if (order.direction != 7 && 0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
-                    suggest.push(order);
-                }
-            });
-        }
-        if (this.status.position.bottom.length != 0) {
-            this.board.at(-this.score.horizon.end.line - 1).slice(this.score.vertical.head.line + 1, -this.score.vertical.end.line - 2).forEach(element => {
-                let order = new Order([0, 0], 0, 1);
-                if (this.entity.distance[element] == 1) {
-                    order = this.entity.setOrder(this.entity.position[element], 5, this.entity.position[element][0] - this.score.vertical.head.line + 1);
-                    //ペアが繋がっている方向によって位置が微調整される
-                    if (this.entity.direction[element] == 2) {
-                        order.size++;
-                        order.position[1]--;
-                    }
-                }
-                else {
-                    order = this.entity.matching(element % 2 == 0 ? element + 1 : element - 1);
-                }
-                if (order.direction != 3 && 0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
-                    suggest.push(order);
-                }
-            });
-        }
-        if (this.status.position.left.length != 0) {
-            this.board.slice(this.score.horizon.head.line + 1, -this.score.horizon.end.line - 2).map(array => array.at(this.score.vertical.head.line)).forEach(element => {
-                let order = new Order([0, 0], 0, 1);
-                if (this.entity.distance[element] == 1) {
-                    order = this.entity.setOrder(this.entity.position[element], 7, this.entity.position[element][1] - this.score.horizon.head.line + 1);
-                    //ペアが繋がっている方向によって位置が微調整される
-                    if (this.entity.direction[element] == 3) {
-                        order.size++;
-                    }
-                }
-                else {
-                    order = this.entity.matching(element % 2 == 0 ? element + 1 : element - 1);
-                }
-                if (order.direction != 5 && 0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
-                    suggest.push(order);
-                }
-            });
-        }
-        if (this.status.position.right.length != 0) {
-            this.board.slice(this.score.horizon.head.line + 2, -this.score.horizon.end.line - 1).map(array => array.at(-this.score.vertical.end.line - 1)).forEach(element => {
-                let order = new Order([0, 0], 0, 1);
-                if (this.entity.distance[element] == 1) {
-                    order = this.entity.setOrder(this.entity.position[element], 3, this.size - this.score.horizon.end.line - this.entity.position[element][1]);
-                    //ペアが繋がっている方向によって位置が微調整される
-                    if (this.entity.direction[element] == 7) {
-                        order.size++;
-                        order.position[0]--;
-                        order.position[1]--;
-                    }
-                }
-                else {
-                    order = this.entity.matching(element % 2 == 0 ? element + 1 : element - 1);
-                }
-                if (order.direction != 2 && 0 <= order.position[0] && order.position[0] + order.size <= this.size && 0 <= order.position[1] && order.position[1] + order.size <= this.size) {
-                    suggest.push(order);
-                }
-            });
-        }
-    }
-
-    /**
-     * ペアになっている要素の塊を端に寄せる操作を列挙する関数
-     * @param {Order[]} suggest 列挙した操作を格納した配列
-     */
-    adjustSuggest(suggest) {
-        //全て揃っている列は操作する必要がないので無視してfor文を回す
-        for (let i = this.score.horizon.head.line + 1; i < this.size - this.score.horizon.end.line - 1; i++) {
-            for (let j = this.score.vertical.head.line + 1; j < this.size - this.score.vertical.end.line - 1; j++) {
-                //ペアになっているエンティティに対してサジェストを出す
-                if (this.entity.distance[this.board[i][j]] == 1) {
-                    let order = this.entity.adjusting(this.board[i][j]);
-                    if (order) {
-                        suggest.push(order);
-                    }
-                }
-            }
-        }
     }
 
     /**
@@ -360,8 +202,8 @@ class BranchBase {
     evaluation() {
         this.lineEvaluation();
         this.score.match = this.size * this.size - (this.size - this.score.vertical.head.line - this.score.vertical.end.line) * (this.size - this.score.horizon.head.line - this.score.horizon.end.line);
-        this.matchCount(24);
-        this.setStatus();
+        this.matchCount();
+        this.entity.setStatus(this.board);
         this.score.compound = this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
     }
 
@@ -408,46 +250,15 @@ class BranchBase {
         }
     }
 
-    matchCount(limit) {
+    matchCount() {
         //この条件式を発動させると枠のような形で位置が指定される
         //全て揃っている列は操作する必要がないので無視してfor文を回す
         for (let i = this.score.horizon.head.line; i < this.size - this.score.horizon.end.line; i++) {
             for (let j = this.score.vertical.head.line; j < this.size - this.score.vertical.end.line; j++) {
-                //この条件式を発動させると枠のような形で位置が指定される
-                if (limit <= i && limit == j) {
-                    if (this.size - this.score.horizon.head.line - this.score.horizon.end.line - limit - i > 0) {
-                        j += this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 > 0 ? this.size - this.score.vertical.head.line - this.score.vertical.end.line - limit * 2 : 0;
-                    }
-                }
                 if (this.entity.distance[this.board[i][j]] == 1) {
                     this.score.match++;
                 }
             }
-        }
-    }
-
-    setStatus() {
-        const MinimumElements = 50;
-        if ((this.size - this.score.horizon.head.line - this.score.horizon.end.line) * (this.size - this.score.vertical.head.line - this.score.vertical.end.line) > MinimumElements) {
-            if (this.entity.distance[this.board.at(this.score.horizon.head.line).at(this.score.vertical.head.line)] != 1) {
-                this.status.position.left = this.entity.position[this.board.at(this.score.horizon.head.line).at(this.score.vertical.head.line)];
-                this.status.addFlag(this.status.Corner);
-            }
-            if (this.entity.distance[this.board.at(this.score.horizon.head.line).at(-this.score.vertical.end.line - 1)] != 1) {
-                this.status.position.top = this.entity.position[this.board.at(this.score.horizon.head.line).at(-this.score.vertical.end.line - 1)];
-                this.status.addFlag(this.status.Corner);
-            }
-            if (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(this.score.vertical.head.line)] != 1) {
-                this.status.position.bottom = this.entity.position[this.board.at(-this.score.horizon.end.line - 1).at(this.score.vertical.head.line)];
-                this.status.addFlag(this.status.Corner);
-            }
-            if (this.entity.distance[this.board.at(-this.score.horizon.end.line - 1).at(-this.score.vertical.end.line - 1)] != 1) {
-                this.status.position.right = this.entity.position[this.board.at(-this.score.horizon.end.line - 1).at(-this.score.vertical.end.line - 1)];
-                this.status.addFlag(this.status.Corner);
-            }
-        }
-        if (!this.status.hasFlag(this.status.Corner)) {
-            this.status.addFlag(this.status.Normal);
         }
     }
 }
@@ -458,7 +269,7 @@ class BranchBase {
 class Garden extends BranchBase {
     /**
      * @param {number[][]} board エンゲージ後のボード
-     * @param {EntityInfo} entity　エンゲージ後のボード
+     * @param {Proposer} entity　エンゲージ後のボード
      * @param {Order} order エンゲージ時の操作
      * @param {number} width
      */
@@ -480,8 +291,9 @@ class Root extends BranchBase {
      */
     constructor(board, depth, width) {
         super(board, width);
-        this.entity.initialize(this.board, this.score);
+        this.entity.initialize(this.board);
         this.evaluation();
+        this.entity.score = this.score
         //エンティティの情報を作る
         //とりあえずインデックスを[0,0,0,.....]で初期化する
         this.index = [...Array(depth).fill(0)];

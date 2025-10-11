@@ -1,4 +1,4 @@
-const { Score, Order } = require("./satellite");
+const { Score, Order, Status } = require("./satellite");
 
 /**
  * エンティティの情報を管理するためのクラス
@@ -39,14 +39,18 @@ class EntityInfo {
      * ボードのスコア
      * @type {Score}
      */
-    score;
+    score = new Score();
+    /**
+    * 盤面タイプ
+    * @type {Status}
+    */
+    status = new Status();
 
     /**
      * 渡されたボードに対しての情報を作成する
      * @param {number[][]} board
-     * @param {Score} score
      */
-    initialize(board, score) {
+    initialize(board) {
         this.size = board.length;
         this.position = new Array(this.size * this.size);
         this.vector = new Array(this.size * this.size);
@@ -65,7 +69,6 @@ class EntityInfo {
             }
         }
         this.distanceSum = this.distance.reduce((previous, current) => previous + current - 1, 0);
-        this.score = score;
     }
 
     /**
@@ -73,6 +76,7 @@ class EntityInfo {
      * @param {EntityInfo} source 
      */
     copyInfo(source) {
+        this.status = new Status();
         this.size = source.size;
         this.position = [...source.position];
         this.vector = [...source.vector];
@@ -95,6 +99,26 @@ class EntityInfo {
         this.distanceSum += (this.distance[value] - 1) * 2;
         this.direction[value] = (this.vector[value][0] > 0 ? 2 : (this.vector[value][0] != 0) ? 5 : 1) * (this.vector[value][1] > 0 ? 3 : (this.vector[value][1] != 0) ? 7 : 1);
         this.direction[pair] = (this.vector[pair][0] > 0 ? 2 : (this.vector[pair][0] != 0) ? 5 : 1) * (this.vector[pair][1] > 0 ? 3 : (this.vector[pair][1] != 0) ? 7 : 1);
+    }
+
+    /**
+     * //サイズと方向によって位置を計算し操作を返す
+     * @param {number[]} position 
+     * @param {number} direction 
+     * @param {number} size 
+     * @returns {Order}
+     */
+    setOrder(position, direction, size) {
+        switch (direction) {
+            case 2:
+                return new Order(position, size, 2);
+            case 3:
+                return new Order([position[0] - size + 1, position[1]], size, 2);
+            case 5:
+                return new Order([position[0] - size + 1, position[1] - size + 1], size, 2);
+            case 7:
+                return new Order([position[0], position[1] - size + 1], size, 2);
+        }
     }
 
     /**
@@ -137,26 +161,6 @@ class EntityInfo {
             order.position[1] += this.vector[value][1];
         }
         return order;
-    }
-
-    /**
-     * //サイズと方向によって位置を計算し操作を返す
-     * @param {number[]} position 
-     * @param {number} direction 
-     * @param {number} size 
-     * @returns {Order}
-     */
-    setOrder(position, direction, size) {
-        switch (direction) {
-            case 2:
-                return new Order(position, size, 2);
-            case 3:
-                return new Order([position[0] - size + 1, position[1]], size, 2);
-            case 5:
-                return new Order([position[0] - size + 1, position[1] - size + 1], size, 2);
-            case 7:
-                return new Order([position[0], position[1] - size + 1], size, 2);
-        }
     }
 
     /**

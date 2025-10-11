@@ -81,27 +81,6 @@ class Score {
      * @type {Line}
      */
     vertical = new Line();
-
-    /**
-     * 渡されたスコアの情報をコピーして取り込む
-     * @param {Score} source 
-     */
-    copyScore(source) {
-        this.match = source.match;
-        this.compound = source.compound;
-        this.horizon.head = source.horizon.head;
-        this.horizon.headLine = source.horizon.headLine;
-        this.horizon.headFlag = source.horizon.headFlag;
-        this.horizon.end = source.horizon.end;
-        this.horizon.endLine = source.horizon.endLine;
-        this.horizon.endFlag = source.horizon.endFlag;
-        this.vertical.head = source.vertical.head;
-        this.vertical.headLine = source.vertical.headLine;
-        this.vertical.headFlag = source.vertical.headFlag;
-        this.vertical.end = source.vertical.end;
-        this.vertical.endLine = source.vertical.endLine;
-        this.vertical.endFlag = source.vertical.endFlag;
-    }
 }
 
 class Order {
