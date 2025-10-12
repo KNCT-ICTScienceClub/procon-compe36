@@ -128,7 +128,12 @@ class BranchBase {
             }
         }
         if (this.entity.status.hasFlag(this.entity.status.Normal) || suggest.length == 0) {
-            this.entity.removalSuggest(this.board, suggest)
+            if (this.entity.status.hasFlag(this.entity.status.Middle)) {
+                this.entity.removalSuggest(this.board, suggest);
+            }
+            else {
+                this.entity.adjustSuggest(this.board, suggest);
+            }
             this.entity.matchSuggest(this.board, suggest, 5);
         }
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う

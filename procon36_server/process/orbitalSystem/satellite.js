@@ -131,6 +131,7 @@ class Status {
     #short;
     #corner;
     #finish;
+    #middle;
 
     get Current() {
         return this.#current;
@@ -144,8 +145,11 @@ class Status {
     get Corner() {
         return this.#corner;
     }
-    get Finish(){
+    get Finish() {
         return this.#finish;
+    }
+    get Middle() {
+        return this.#middle;
     }
 
     constructor() {
@@ -153,7 +157,8 @@ class Status {
         this.#normal = 2;
         this.#short = 3;
         this.#corner = 5;
-        this.#finish=7
+        this.#finish = 7;
+        this.#middle = 11;
         this.position = new StatusPosition();
     }
 
