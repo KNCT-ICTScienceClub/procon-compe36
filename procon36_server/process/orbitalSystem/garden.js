@@ -130,11 +130,14 @@ class BranchBase {
         if (this.entity.status.hasFlag(this.entity.status.Normal) || suggest.length == 0) {
             if (this.entity.status.hasFlag(this.entity.status.Middle)) {
                 this.entity.removalSuggest(this.board, suggest);
+                this.entity.matchSuggest(this.board, suggest, 5);
             }
             else {
-                this.entity.adjustSuggest(this.board, suggest);
+                if(this.entity.distanceSum>2000){
+                    this.entity.adjustSuggest(this.board, suggest);
+                }
+                this.entity.matchSuggest(this.board, suggest, 3);
             }
-            this.entity.matchSuggest(this.board, suggest, 5);
         }
         //サジェストをxとyに関して並び替えを行いサイズに関しても並び替えを行う
         suggest.sort((a, b) => a.position[0] == b.position[0] ? (a.position[1] == b.position[1] ? a.size - b.size : a.position[1] - b.position[1]) : a.position[0] - b.position[0]);
@@ -206,7 +209,7 @@ class BranchBase {
     evaluation() {
         this.lineEvaluation();
         this.score.match = this.size * this.size - (this.size - this.score.vertical.head.line - this.score.vertical.end.line) * (this.size - this.score.horizon.head.line - this.score.horizon.end.line);
-        this.matchCount();
+        //this.matchCount();
         this.score.compound = this.score.horizon.head.value + this.score.horizon.end.value + this.score.vertical.head.value + this.score.vertical.end.value;
     }
 

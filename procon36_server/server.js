@@ -231,7 +231,7 @@ const server = app.listen(port, async (err) => {
 
         const matchInfo = await getMatchInfo();
 
-        const answer = await forkProcess(matchInfo.problem.field.entities, 7, 2, 290);
+        const answer = await forkProcess(matchInfo.problem.field.entities, 6, 3, 295);
 
         await postAnswer(answer);
     }

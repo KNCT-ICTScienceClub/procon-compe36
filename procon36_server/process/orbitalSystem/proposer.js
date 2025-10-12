@@ -101,7 +101,7 @@ class Proposer extends EntityInfo {
         if (!this.status.hasFlag(this.status.Corner)) {
             this.status.addFlag(this.status.Normal);
         }
-        if (this.score.match > 180) {
+        if (this.distanceSum < 1900) {
             this.status.addFlag(this.status.Middle);
         }
         if ((this.size - this.score.horizon.head.line - this.score.horizon.end.line) * (this.size - this.score.vertical.head.line - this.score.vertical.end.line) < 80) {
