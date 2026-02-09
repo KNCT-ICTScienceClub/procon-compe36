@@ -53,7 +53,9 @@ MonoBehaviour:
   numberField: {fileID: 3118703271640656161}
   meshRenderer: {fileID: 1723959566562587467}
   isSelected: 0
-  isPair: 0
+  hasPair: 0
+  isArrangePairsColor: 0
+  myPair: {fileID: 0}
   number: 0
   fieldSize: 0
 --- !u!33 &3691364831774683776
